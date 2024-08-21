@@ -15,6 +15,8 @@ export default function Feed() {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.heading}>Que tipo de pet está procurando?</Text>
+      
       <FlatList
         data={cardData}
         keyExtractor={(item) => item.id}
@@ -29,6 +31,7 @@ export default function Feed() {
           </View>
         )}
         numColumns={2} // Define que cada linha terá 2 colunas
+        columnWrapperStyle={styles.columnWrapper} // Garante espaçamento entre as colunas
         contentContainerStyle={styles.listContent}
       />
     </View>
@@ -39,19 +42,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 8,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  otherContent: {
-    marginTop: 20,
-    fontSize: 16,
+    backgroundColor: '#f4f4f4',
   },
   cardContainer: {
     flex: 1,
-    margin: 8, // Espaçamento entre os cards
+    padding: 8, // Espaçamento entre os cards
+    maxWidth: '50%', // Garante que cada card ocupe 50% da largura
+  },
+  columnWrapper: {
+    justifyContent: 'space-between', // Espaçamento igual entre as colunas
   },
   listContent: {
+    paddingHorizontal: 8,
+  },
+  heading: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#11181c',
+    textAlign: 'center',
+    marginBottom: 16,
   },
 });
