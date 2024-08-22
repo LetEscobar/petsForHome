@@ -61,6 +61,7 @@ export default function TabLayout() {
         options={{
           title: 'Meus Pets',
           tabBarIcon: ({ color }) => <TabBarIcon name="check" color={color} />,
+          // color='red'
         }}
       />
 
