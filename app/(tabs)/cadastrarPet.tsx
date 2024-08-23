@@ -12,6 +12,8 @@ const PetRegistrationScreen = () => {
   const [ageMonths, setAgeMonths] = useState('');
   const [requirements, setRequirements] = useState('');
   const [images, setImages] = useState([]); // Armazena várias imagens
+  const [castrado, setCastrado] = useState(false);
+  const [vacinasEmDia, setVacinasEmDia] = useState(false);
 
   // Função para fazer upload de imagem
   const handleUpload = async () => {
@@ -41,6 +43,8 @@ const PetRegistrationScreen = () => {
       ageYears,
       ageMonths,
       requirements,
+      castrado,
+      vacinasEmDia,
       images, // Todas as imagens
     });
     alert('Informações salvas com sucesso!');
@@ -98,6 +102,40 @@ const PetRegistrationScreen = () => {
           value={ageMonths}
           onChangeText={setAgeMonths}
         />
+      </View>
+
+      {/* Campo Castrado */}
+      <Text style={styles.label}>Castrado</Text>
+      <View style={styles.booleanContainer}>
+        <TouchableOpacity
+          style={[styles.booleanButton, castrado ? styles.booleanSelected : null]}
+          onPress={() => setCastrado(true)}
+        >
+          <Text style={styles.booleanButtonText}>Sim</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.booleanButton, !castrado ? styles.booleanSelected : null]}
+          onPress={() => setCastrado(false)}
+        >
+          <Text style={styles.booleanButtonText}>Não</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Campo Vacinas em Dia */}
+      <Text style={styles.label}>Vacinas em dia</Text>
+      <View style={styles.booleanContainer}>
+        <TouchableOpacity
+          style={[styles.booleanButton, vacinasEmDia ? styles.booleanSelected : null]}
+          onPress={() => setVacinasEmDia(true)}
+        >
+          <Text style={styles.booleanButtonText}>Sim</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.booleanButton, !vacinasEmDia ? styles.booleanSelected : null]}
+          onPress={() => setVacinasEmDia(false)}
+        >
+          <Text style={styles.booleanButtonText}>Não</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Requisitos de Adoção */}
@@ -235,6 +273,28 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: "600",
     fontSize: 16,
+  },
+  booleanContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  booleanButton: {
+    width: '48%',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    backgroundColor: '#fff',
+    borderColor: '#e4e4e7',
+    alignItems: 'center',
+  },
+  booleanButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  booleanSelected: {
+    backgroundColor: '#e3ebf6',
+    borderColor: '#004dd3',
   },
 });
 
