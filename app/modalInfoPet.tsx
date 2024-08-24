@@ -35,7 +35,7 @@ const getRandomPetData = () => ({
   castrated: 'Sim',
   vaccines: 'Sim',
   adoptionRequirements: 'Precisa de um quintal grande e uma família que esteja sempre presente.',
-  images: ['https://via.placeholder.com/150', 'https://via.placeholder.com/150'],
+  images: ['https://picsum.photos/200/600', 'https://picsum.photos/200/601', 'https://picsum.photos/200/602', 'https://picsum.photos/200/603'],
 });
 
 export default function ModalScreen({ route }) {
@@ -58,7 +58,7 @@ export default function ModalScreen({ route }) {
   useLayoutEffect(() => {
     // Define o título do modal
     navigation.setOptions({
-      title: 'Adotar Pet',
+      title: 'Informações do pet',
     });
   }, [navigation]);
 
@@ -105,12 +105,12 @@ export default function ModalScreen({ route }) {
         </View>
       </View>
 
-      <Text style={styles.label}>Requisitos para adoção</Text>
+      <Text style={styles.title}>Requisitos para adoção</Text>
       <Text style={[styles.info, styles.requisitos]}>{petData.adoptionRequirements}</Text>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
       
-      <Text style={styles.label}>Lista de interessados em adotar</Text>
+      <Text style={styles.title}>Lista de interessados em adotar</Text>
       
       {/* Verifica se o array interestedPeople não está vazio */}
       {interestedPeople.length > 0 ? (
@@ -131,7 +131,7 @@ export default function ModalScreen({ route }) {
               <Text style={styles.info}>{person.housing}</Text>
             </View>
             
-            <View style={styles.infoRow}>
+            <View style={styles.infoColumn}>
               <Text style={styles.label}>Motivo da adoção:</Text>
               <Text style={styles.info}>{person.reason}</Text>
             </View>
@@ -200,6 +200,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#fff',
     gap: 8,
+  },
+  infoColumn: {
+    flexDirection: 'column',
+    marginBottom: 10,
+    alignItems: 'left',
+    backgroundColor: '#fff',
+    gap: 8,
+    width: '100%',
   },
   requisitos: {
     marginBottom: 24,
