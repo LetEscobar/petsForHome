@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { FlatList, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import Card from '@/components/Card'; // Importando o Card
+import { useNavigation } from '@react-navigation/native';
 
 export default function Feed() {
+  const navigation = useNavigation();
+  
   // Estado para controlar o filtro ativo
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
 
@@ -57,17 +60,19 @@ export default function Feed() {
           <Text style={styles.heading1}>Escolha um bichinho para adotar!</Text>
         </View>
       }
-      data={filteredData}
+      data={[...filteredData, ...cardData]}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
-        <View style={styles.cardContainer}>
+        <TouchableOpacity style={styles.cardContainer}
+          onPress={() => navigation.navigate('modalAdotarPet', { pet: item })}
+        >
           <Card
             title={item.title}
             subtitle={item.subtitle}
             description={item.description}
             imageSource={item.imageSource}
           />
-        </View>
+        </TouchableOpacity>
       )}
       numColumns={2} // Define que cada linha terá 2 colunas
       columnWrapperStyle={styles.columnWrapper} // Garante espaçamento entre as colunas
