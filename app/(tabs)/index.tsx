@@ -60,7 +60,7 @@ export default function Feed() {
           <Text style={styles.heading1}>Escolha um bichinho para adotar!</Text>
         </View>
       }
-      data={[...filteredData, ...cardData]}
+      data={filteredData}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
         <TouchableOpacity style={styles.cardContainer}
@@ -84,7 +84,7 @@ export default function Feed() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#f4f4f4',
+    backgroundColor: '#f9f9f9',
     padding: 16,
   },
   heading1: {

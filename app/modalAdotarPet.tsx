@@ -84,10 +84,7 @@ export default function ModalScreen({ route }) {
       </View>
 
       <Text style={styles.label}>Requisitos para adoção:</Text>
-      <Text style={styles.info}>{petData.adoptionRequirements}</Text>
-      
-      
-      <View style={styles.separator} />
+      <Text style={[styles.info, styles.requisitos]}>{petData.adoptionRequirements}</Text>
 
       <Text style={styles.formLabel}>Por que você deseja adotar esse pet?</Text>
       <TextInput
@@ -101,7 +98,7 @@ export default function ModalScreen({ route }) {
       <Text style={styles.formLabel}>Qual o seu tipo de moradia?</Text>
       <TextInput
         style={styles.input}
-        placeholder="Digite seu tipo de moradia aqui..."
+        placeholder="Ex.: Casa, Apartamento, Sítio..."
         value={housingType}
         onChangeText={setHousingType}
       />
@@ -171,6 +168,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#fff',
     gap: 8,
+  },
+  requisitos: {
+    marginBottom: 24,
   },
   formLabel: {
     fontSize: 16,

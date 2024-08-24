@@ -175,6 +175,7 @@ const PetRegistrationScreen = () => {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
+    backgroundColor: '#f9f9f9',
   },
   title: {
     marginTop: 16,
