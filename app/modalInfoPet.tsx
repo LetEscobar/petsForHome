@@ -1,45 +1,57 @@
 import { StatusBar } from 'expo-status-bar';
 import { Platform, ScrollView, StyleSheet, TouchableOpacity, Image, TextInput, Alert } from 'react-native';
 import { Text, View } from '@/components/Themed';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { useNavigation } from 'expo-router';
 
 // Função para gerar informações aleatórias caso não haja pets cadastrados
+const getRandomInterestedPeople = () => [
+  {
+    name: 'João Silva',
+    phone: '(11) 99999-9999',
+    housing: 'Apartamento',
+    reason: 'Sempre quis ter um pet para fazer companhia.',
+  },
+  {
+    name: 'Maria Souza',
+    phone: '(21) 98888-8888',
+    housing: 'Casa com quintal',
+    reason: 'Tenho espaço e quero adotar um cachorro para meus filhos.',
+  },
+  {
+    name: 'Carlos Oliveira',
+    phone: '(31) 97777-7777',
+    housing: 'Casa',
+    reason: 'Gosto muito de animais e quero oferecer um lar.',
+  },
+];
+
+// Função para gerar informações aleatórias de pets caso não haja pets cadastrados
 const getRandomPetData = () => ({
-  name: 'Pet Aleatório',
+  name: 'Bobby',
   type: 'Cachorro',
-  age: '2 anos e 3 meses',
-  sex: 'Macho',
+  age: '2 anos',
+  sex: 'Masculino',
   castrated: 'Sim',
   vaccines: 'Sim',
-  adoptionRequirements: 'O pet precisa de um ambiente espaçoso e seguro, preferencialmente com um quintal grande para que possa brincar e se exercitar.',
-  images: [
-    'https://picsum.photos/200/300', 
-    'https://picsum.photos/200/301', 
-    'https://picsum.photos/200/302', 
-    'https://picsum.photos/200/303'
-  ],
+  adoptionRequirements: 'Precisa de um quintal grande e uma família que esteja sempre presente.',
+  images: ['https://via.placeholder.com/150', 'https://via.placeholder.com/150'],
 });
 
 export default function ModalScreen({ route }) {
-  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
-  const [reason, setReason] = useState('');
-  const [housingType, setHousingType] = useState('');
+  const [reason] = useState('');
+  const [housingType] = useState('');
   const [error, setError] = useState('');
+  const [interestedPeople, setInterestedPeople] = useState([]);
 
   // Dados do pet vindos do card ou aleatórios
   const petData = route?.params?.petData || getRandomPetData();
 
-  const handleAdoptButtonClick = () => {
-    if (!reason.trim() || !housingType.trim()) {
-      setError('Todos os campos são obrigatórios.');
-      return;
-    }
-
-    setError('');
-    Alert.alert('Sucesso', 'Sua solicitação de adoção foi enviada com sucesso.');
-    // Lógica para enviar os dados do formulário
-  };
+  // Use o useEffect para popular o array de interessados quando o componente for montado
+  useEffect(() => {
+    const fetchedPeople = getRandomInterestedPeople();
+    setInterestedPeople(fetchedPeople);
+  }, []);
   
   const navigation = useNavigation();
 
@@ -62,7 +74,7 @@ export default function ModalScreen({ route }) {
       </ScrollView>
 
       <View style={styles.card}>
-      <View style={styles.infoRow}>
+        <View style={styles.infoRow}>
           <Text style={styles.label}>Nome:</Text>
           <Text style={styles.info}>{petData.name}</Text>
         </View>
@@ -93,32 +105,42 @@ export default function ModalScreen({ route }) {
         </View>
       </View>
 
-      <Text style={styles.label}>Requisitos para adoção:</Text>
+      <Text style={styles.label}>Requisitos para adoção</Text>
       <Text style={[styles.info, styles.requisitos]}>{petData.adoptionRequirements}</Text>
 
-      <Text style={styles.formLabel}>Por que você deseja adotar esse pet?</Text>
-      <TextInput
-        style={styles.textarea}
-        placeholder="Digite sua resposta aqui..."
-        multiline
-        value={reason}
-        onChangeText={setReason}
-      />
-
-      <Text style={styles.formLabel}>Qual o seu tipo de moradia?</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Ex.: Casa, Apartamento, Sítio..."
-        value={housingType}
-        onChangeText={setHousingType}
-      />
-
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      
+      <Text style={styles.label}>Lista de interessados em adotar</Text>
+      
+      {/* Verifica se o array interestedPeople não está vazio */}
+      {interestedPeople.length > 0 ? (
+        interestedPeople.map((person, index) => (
+          <View key={index} style={styles.card}>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Nome:</Text>
+              <Text style={styles.info}>{person.name}</Text>
+            </View>
+            
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Telefone:</Text>
+              <Text style={styles.info}>{person.phone}</Text>
+            </View>
+            
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Moradia:</Text>
+              <Text style={styles.info}>{person.housing}</Text>
+            </View>
+            
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Motivo da adoção:</Text>
+              <Text style={styles.info}>{person.reason}</Text>
+            </View>
+          </View>
+        ))
+      ) : (
+        <Text style={styles.info}>Nenhum interessado por enquanto.</Text>
+      )}
 
-      {/* Botão Quero Adotar */}
-      <TouchableOpacity style={styles.saveButton} onPress={handleAdoptButtonClick}>
-        <Text style={styles.saveButtonText}>Quero adotar</Text>
-      </TouchableOpacity>
       {/* Status bar */}
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
     </ScrollView>
@@ -138,7 +160,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
-    color:'#000'
+    color: '#000',
   },
   gallery: {
     flexDirection: 'row',
@@ -160,7 +182,7 @@ const styles = StyleSheet.create({
     gap: 12,
     borderRadius: 12,
     backgroundColor: '#fff',
-    borderStyle: "solid",
+    borderStyle: 'solid',
     borderColor: '#e4e4e7',
   },
   label: {
@@ -181,56 +203,6 @@ const styles = StyleSheet.create({
   },
   requisitos: {
     marginBottom: 24,
-  },
-  formLabel: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 8,
-    color: '#000',
-    alignItems: 'flex-start',
-    width: '100%',
-  },
-  textarea: {
-    height: 100,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    marginBottom: 24,
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    borderStyle: "solid",
-    borderColor: '#e4e4e7',
-    width: '100%',
-  },
-  input: {
-    height: 56,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    marginBottom: 24,
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    borderStyle: "solid",
-    borderColor: '#e4e4e7',
-    width: '100%',
-  },
-  saveButton: {
-    backgroundColor: '#004dd3',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 48,
-    marginVertical: 24,
-    width: '100%',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '100%',
-    backgroundColor: '#e4e4e7',
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontWeight: "600",
-    fontSize: 16,
   },
   errorText: {
     color: 'red',

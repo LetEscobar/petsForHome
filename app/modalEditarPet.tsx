@@ -1,25 +1,37 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { Platform, ScrollView, StyleSheet, TouchableOpacity, Image, TextInput, Alert, View } from 'react-native';
+import { Text } from '@/components/Themed';
+import { useLayoutEffect, useState } from 'react';
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useNavigation } from 'expo-router';
 
-const PetRegistrationScreen = () => {
-  const [name, setName] = useState('');
-  const [sex, setSex] = useState('Feminino');
-  const [type, setType] = useState('Gato');
-  const [ageYears, setAgeYears] = useState('');
-  const [ageMonths, setAgeMonths] = useState('');
-  const [requirements, setRequirements] = useState('');
-  const [images, setImages] = useState([]);
-  const [castrado, setCastrado] = useState(false);
-  const [vacinasEmDia, setVacinasEmDia] = useState(false);
+const EditPetScreen = ({ route }) => {
+  const [name, setName] = useState(route?.params?.petData?.name || '');
+  const [sex, setSex] = useState(route?.params?.petData?.sex || 'Feminino');
+  const [type, setType] = useState(route?.params?.petData?.type || 'Gato');
+  const [ageYears, setAgeYears] = useState(route?.params?.petData?.ageYears || '');
+  const [ageMonths, setAgeMonths] = useState(route?.params?.petData?.ageMonths || '');
+  const [requirements, setRequirements] = useState(route?.params?.petData?.requirements || '');
+  const [images, setImages] = useState(route?.params?.petData?.images || []);
+  const [castrado, setCastrado] = useState(route?.params?.petData?.castrado || false);
+  const [vacinasEmDia, setVacinasEmDia] = useState(route?.params?.petData?.vacinasEmDia || false);
+
+  const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    // Define o título do modal
+    navigation.setOptions({
+      title: 'Editar Pet',
+    });
+  }, [navigation]);
 
   // Função para fazer upload de imagem
   const handleUpload = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      alert('Precisamos de permissão para acessar suas mídias!');
+      Alert.alert('Permissão necessária', 'Precisamos de permissão para acessar suas mídias!');
       return;
     }
 
@@ -53,6 +65,7 @@ const PetRegistrationScreen = () => {
   };
 
   const handleSave = () => {
+    // Aqui você pode implementar a lógica para salvar as informações do pet
     console.log({
       name,
       sex,
@@ -64,12 +77,12 @@ const PetRegistrationScreen = () => {
       vacinasEmDia,
       images,
     });
-    alert('Informações salvas com sucesso!');
+    Alert.alert('Sucesso', 'Informações do pet atualizadas com sucesso!');
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Cadastre seu pet aqui</Text>
+      <Text style={styles.title}>Atualize as Informações do Pet</Text>
 
       {/* Input de Nome */}
       <Text style={styles.label}>Nome do pet</Text>
@@ -193,148 +206,154 @@ const PetRegistrationScreen = () => {
       <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
         <Text style={styles.saveButtonText}>Salvar informações do pet</Text>
       </TouchableOpacity>
+
+      {/* Status bar */}
+      <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    backgroundColor: '#f9f9f9',
-  },
-  title: {
-    marginTop: 16,
-    marginBottom: 24,
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  input: {
-    height: 56,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    marginBottom: 24,
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    borderStyle: 'solid',
-    borderColor: '#e4e4e7',
-  },
-  picker: {
-    height: 50,
-    width: '100%',
-    marginBottom: 24,
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    borderStyle: 'solid',
-    borderColor: '#e4e4e7',
-  },
-  ageContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  ageInput: {
-    width: '48%',
-    height: 56,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    marginBottom: 12,
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    borderStyle: 'solid',
-    borderColor: '#e4e4e7',
-  },
-  textarea: {
-    height: 100,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    marginBottom: 24,
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    borderStyle: 'solid',
-    borderColor: '#e4e4e7',
-  },
-  uploadButton: {
-    borderRadius: 12,
-    borderStyle: 'solid',
-    borderColor: '#004dd3',
-    borderWidth: 1,
-    backgroundColor: '#fff',
-    padding: 10,
-    alignItems: 'center',
-    marginBottom: 12,
-    flexDirection: 'row',
-    gap: 24,
-    alignContent: 'center',
-    justifyContent: 'center',
-  },
-  uploadButtonText: {
-    color: '#004dd3',
-    fontWeight: '600',
-  },
-  carousel: {
-    marginVertical: 10,
-  },
-  imageContainer: {
-    position: 'relative',
-    marginRight: 10,
-  },
-  imageCarousel: {
-    width: 150,
-    height: 150,
-    borderRadius: 8,
-  },
-  deleteButton: {
-    position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: '#d9534f',
-    borderRadius: 12,
-    padding: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveButton: {
-    backgroundColor: '#004dd3',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20,
-    height: 48,
-    marginBottom: 24,
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  booleanContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  booleanButton: {
-    width: '48%',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    backgroundColor: '#fff',
-    borderColor: '#e4e4e7',
-    alignItems: 'center',
-  },
-  booleanButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  booleanSelected: {
-    backgroundColor: '#e3ebf6',
-    borderColor: '#004dd3',
-  },
-});
+    container: {
+      padding: 16,
+      backgroundColor: '#f9f9f9',
+    },
+    title: {
+      marginTop: 16,
+      marginBottom: 24,
+      fontSize: 16,
+      fontWeight: '600',
+      textAlign: 'center',
+      color: '#000',
+    },
+    label: {
+      fontSize: 16,
+      fontWeight: '700',
+      marginBottom: 8,
+      color: '#000',
+    },
+    input: {
+      height: 56,
+      borderWidth: 1,
+      paddingHorizontal: 8,
+      marginBottom: 24,
+      borderRadius: 12,
+      backgroundColor: '#fff',
+      borderStyle: 'solid',
+      borderColor: '#e4e4e7',
+    },
+    picker: {
+      height: 50,
+      width: '100%',
+      marginBottom: 24,
+      borderRadius: 12,
+      backgroundColor: '#fff',
+      borderStyle: 'solid',
+      borderColor: '#e4e4e7',
+    },
+    ageContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 24,
+    },
+    ageInput: {
+      width: '48%',
+      height: 56,
+      borderWidth: 1,
+      paddingHorizontal: 8,
+      marginBottom: 12,
+      borderRadius: 12,
+      backgroundColor: '#fff',
+      borderStyle: 'solid',
+      borderColor: '#e4e4e7',
+    },
+    textarea: {
+      height: 100,
+      borderWidth: 1,
+      paddingHorizontal: 8,
+      marginBottom: 24,
+      borderRadius: 12,
+      backgroundColor: '#fff',
+      borderStyle: 'solid',
+      borderColor: '#e4e4e7',
+    },
+    uploadButton: {
+      borderRadius: 12,
+      borderStyle: 'solid',
+      borderColor: '#004dd3',
+      borderWidth: 1,
+      backgroundColor: '#fff',
+      padding: 10,
+      alignItems: 'center',
+      marginBottom: 12,
+      flexDirection: 'row',
+      gap: 24,
+      alignContent: 'center',
+      justifyContent: 'center',
+    },
+    uploadButtonText: {
+      color: '#004dd3',
+      fontWeight: '600',
+    },
+    carousel: {
+      marginVertical: 10,
+    },
+    imageContainer: {
+      position: 'relative',
+      marginRight: 10,
+    },
+    imageCarousel: {
+      width: 150,
+      height: 150,
+      borderRadius: 8,
+    },
+    deleteButton: {
+      position: 'absolute',
+      top: 5,
+      right: 5,
+      backgroundColor: '#d9534f',
+      borderRadius: 12,
+      padding: 5,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    saveButton: {
+      backgroundColor: '#004dd3',
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 20,
+      height: 48,
+      marginBottom: 24,
+    },
+    saveButtonText: {
+      color: '#fff',
+      fontWeight: '600',
+      fontSize: 16,
+    },
+    booleanContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 24,
+    },
+    booleanButton: {
+      width: '48%',
+      padding: 16,
+      borderRadius: 12,
+      borderWidth: 1,
+      backgroundColor: '#fff',
+      borderColor: '#e4e4e7',
+      alignItems: 'center',
+    },
+    booleanButtonText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#000',
+    },
+    booleanSelected: {
+      backgroundColor: '#e3ebf6',
+      borderColor: '#004dd3',
+    },
+  });
 
-export default PetRegistrationScreen;
+export default EditPetScreen;

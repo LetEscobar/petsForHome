@@ -110,6 +110,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     flex: 1,
+    backgroundColor: '#f9f9f9',
   },
   tabHeader: {
     flexDirection: 'row',

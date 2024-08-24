@@ -5,8 +5,19 @@ import { Platform, StyleSheet } from 'react-native';
 
 import EditScreenInfo from '@/components/EditScreenInfo';
 import { Text, View } from '@/components/Themed';
+import { useLayoutEffect } from 'react';
+import { useNavigation } from 'expo-router';
 
 export default function ModalNotificacoes() {
+  const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    // Define o título do modal
+    navigation.setOptions({
+      title: 'Notificações',
+    });
+  }, [navigation]);
+  
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Notificações</Text>

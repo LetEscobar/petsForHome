@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, FlatList, ScrollView, Modal, Alert } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, FlatList, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 const initialPetsData = [
   { id: '1', name: 'Rex', gender: 'Macho', type: 'Cachorro', image: 'https://picsum.photos/200/600' },
@@ -12,7 +13,7 @@ const initialPetsData = [
   { id: '7', name: 'Thor', gender: 'Macho', type: 'Cachorro', image: 'https://picsum.photos/200/606' },
 ];
 
-const PetCard = ({ pet, onDelete }) => (
+const PetCard = ({ pet, onDelete, navigation }) => (
   <View style={styles.card}>
     <Image source={{ uri: pet.image }} style={styles.petImage} />
     <View style={styles.infoContainer}>
@@ -22,9 +23,13 @@ const PetCard = ({ pet, onDelete }) => (
     </View>
     <View style={styles.iconContainer}>
       <TouchableOpacity style={styles.iconButton}>
-        <FontAwesome name="info-circle" size={24} color="black" />
+        <FontAwesome name="info-circle" size={24} color="black" 
+        onPress={() => navigation.navigate('modalInfoPet', { pet })}/>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.iconButton}>
+      <TouchableOpacity
+        style={styles.iconButton}
+        onPress={() => navigation.navigate('modalEditarPet', { pet })}
+      >
         <FontAwesome name="edit" size={24} color="black" />
       </TouchableOpacity>
       <TouchableOpacity style={styles.iconButton} onPress={() => onDelete(pet)}>
@@ -37,24 +42,29 @@ const PetCard = ({ pet, onDelete }) => (
 
 const RegisteredPetsScreen = () => {
   const [petsData, setPetsData] = useState(initialPetsData);
-  const [selectedPet, setSelectedPet] = useState(null);
-  const [isModalVisible, setModalVisible] = useState(false);
+  const navigation = useNavigation(); // Mova isso para dentro do componente
 
   const confirmDelete = (pet) => {
-    setSelectedPet(pet);
-    setModalVisible(true);
+    Alert.alert(
+      "Confirmação de Exclusão",
+      `Tem certeza que deseja excluir ${pet.name} da sua lista de pets?`,
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Excluir",
+          onPress: () => handleDelete(pet),
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
-  const handleDelete = () => {
-    setPetsData(petsData.filter((pet) => pet.id !== selectedPet.id));
-    setModalVisible(false);
-    Alert.alert("Pet Excluído", `${selectedPet.name} foi excluído da sua lista de pets cadastrados.`);
-    setSelectedPet(null);
-  };
-
-  const cancelDelete = () => {
-    setModalVisible(false);
-    setSelectedPet(null);
+  const handleDelete = (pet) => {
+    setPetsData(petsData.filter((p) => p.id !== pet.id));
+    Alert.alert("Pet Excluído", `${pet.name} foi excluído da sua lista de pets cadastrados.`);
   };
 
   return (
@@ -63,29 +73,15 @@ const RegisteredPetsScreen = () => {
       <FlatList
         data={petsData}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <PetCard pet={item} onDelete={confirmDelete} />}
+        renderItem={({ item }) => (
+          <PetCard pet={item} onDelete={confirmDelete} navigation={navigation} />
+        )}
         contentContainerStyle={styles.container}
       />
-
-      {/* Modal de confirmação */}
-      <Modal visible={isModalVisible} transparent={true} animationType="slide">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalText}>Tem certeza que deseja excluir {selectedPet?.name} da sua lista de pets?</Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.modalButtonConfirm} onPress={handleDelete}>
-                <Text style={styles.modalButtonText}>Sim, excluir</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalButtonCancel} onPress={cancelDelete}>
-                <Text style={styles.modalButtonText}>Não, cancelar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   screen: {
@@ -138,48 +134,6 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     padding: 8,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    marginHorizontal: 20,
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  modalText: {
-    fontSize: 16,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  modalButtonConfirm: {
-    flex: 1,
-    backgroundColor: '#4caf50',
-    padding: 10,
-    borderRadius: 4,
-    alignItems: 'center',
-    marginRight: 4,
-  },
-  modalButtonCancel: {
-    flex: 1,
-    backgroundColor: '#ff5252',
-    padding: 10,
-    borderRadius: 4,
-    alignItems: 'center',
-    marginLeft: 4,
-  },
-  modalButtonText: {
-    color: '#fff',
-    fontWeight: '500',
   },
 });
 
