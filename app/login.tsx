@@ -1,28 +1,31 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
-import { useNavigation } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-
 
 const LoginScreen = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const navigation = useNavigation();
+  const router = useRouter();
 
-  // Credenciais predefinidas para teste
-  const correctUsername = 'Teste';
-  const correctPassword = 'Senha123';
-
-  const handleLogin = () => {
-    if (username === correctUsername && password === correctPassword) {
-      // Redirecionar para a tela principal
-      navigation.navigate('(tabs)');
-    } else {
-      Alert.alert('Erro de Login', 'Usuário ou senha incorretos.');
+  const handleLogin = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('@user_data');
+      if (userData) {
+        const { usuario: storedUsuario, senha: storedSenha } = JSON.parse(userData);
+        if (username === storedUsuario && password === storedSenha) {
+          // Login bem-sucedido
+          router.push('/'); // Redireciona para a tela principal
+        } else {
+          Alert.alert('Erro de Login', 'Usuário ou senha incorretos.');
+        }
+      } else {
+        Alert.alert('Erro', 'Nenhum usuário encontrado.');
+      }
+    } catch (error) {
+      Alert.alert('Erro', 'Ocorreu um erro ao realizar o login.');
     }
   };
-
-  const router = useRouter();
 
   const handleCreateAccount = () => {
     router.push('/cadastroUsuario'); // Redireciona para a tela de cadastro
