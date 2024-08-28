@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from 'expo-router';
+import { useRouter } from 'expo-router';
+
 
 const LoginScreen = () => {
   const [username, setUsername] = useState('');
@@ -18,6 +20,12 @@ const LoginScreen = () => {
     } else {
       Alert.alert('Erro de Login', 'Usuário ou senha incorretos.');
     }
+  };
+
+  const router = useRouter();
+
+  const handleCreateAccount = () => {
+    router.push('/cadastroUsuario'); // Redireciona para a tela de cadastro
   };
 
   return (
@@ -59,7 +67,7 @@ const LoginScreen = () => {
       <Text style={styles.orText}>ou</Text>
 
       {/* Botão de criar conta */}
-      <TouchableOpacity style={styles.createAccountButton}>
+      <TouchableOpacity style={styles.createAccountButton} onPress={handleCreateAccount}>
         <Text style={styles.createAccountText}>Criar uma conta</Text>
       </TouchableOpacity>
     </View>
