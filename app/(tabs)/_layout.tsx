@@ -15,9 +15,8 @@ function TabBarIcon(props: {
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const router = useRouter(); // Para navegação
+  const router = useRouter();
 
-  // Função para gerenciar o logout
   const handleLogout = () => {
     Alert.alert(
       'Confirmação de Logout',
@@ -30,9 +29,7 @@ export default function TabLayout() {
         {
           text: 'Sim, sair',
           onPress: () => {
-            // Aqui você pode implementar a lógica de logout,
-            // como limpar o estado de autenticação ou tokens
-            router.replace('/login'); // Redireciona para a página de login
+            router.replace('/login');
           },
         },
       ],
@@ -43,7 +40,13 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: '#004DD3', // Cor dos ícones ativos
+        tabBarInactiveTintColor: '#484848', // Cor dos ícones inativos
+        tabBarStyle: {
+          height: 70, // Aumenta a altura da TabBar
+          paddingBottom: 10, // Opcional: Ajusta o padding inferior
+          paddingTop: 10, // Opcional: Ajusta o padding superior
+        },
         headerShown: useClientOnlyValue(false, true),
       }}
     >
@@ -75,7 +78,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <TabBarIcon name="plus-circle" color={color} />,
         }}
       />
-
       <Tabs.Screen
         name="petsCadastrados"
         options={{
@@ -83,7 +85,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <TabBarIcon name="check" color={color} />,
         }}
       />
-
       <Tabs.Screen
         name="perfilUsuario"
         options={{

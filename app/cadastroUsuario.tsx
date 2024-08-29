@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native'; // Certifique-se de que você está usando o React Navigation
@@ -131,6 +131,15 @@ const CadastroUsuario = () => {
     ];
 
     const data = currentTab === 'Seus dados' ? fieldsSeusDados : currentTab === 'Endereço' ? fieldsEndereco : fieldsFinalizar;
+
+    const navigation = useNavigation();
+
+    useLayoutEffect(() => {
+      // Define o título do modal
+      navigation.setOptions({
+        title: 'Criar conta',
+      });
+    }, [navigation]);
 
     return (
       <FlatList

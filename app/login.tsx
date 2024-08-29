@@ -86,8 +86,10 @@ const styles = StyleSheet.create({
   },
   logo: {
     width: 150,
-    height: 150,
+    height: undefined,
+    aspectRatio: 1, // Mantém a proporção da imagem
     marginBottom: 20,
+    resizeMode: 'contain', // Redimensiona a imagem para caber no contêiner sem cortar
   },
   title: {
     fontSize: 24,
@@ -96,12 +98,14 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   input: {
-    width: '100%',
-    padding: 10,
+    height: 56,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    marginBottom: 15,
+    paddingHorizontal: 8,
+    marginBottom: 24,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderColor: '#e4e4e7',
+    width: '100%',
   },
   forgotPassword: {
     alignSelf: 'flex-end',
@@ -109,12 +113,13 @@ const styles = StyleSheet.create({
     color: '#0066cc',
   },
   loginButton: {
-    backgroundColor: '#ff6b6b',
-    padding: 15,
-    borderRadius: 5,
-    width: '100%',
+    backgroundColor: '#004dd3',
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 10,
+    justifyContent: 'center',
+    height: 48,
+    marginTop: 20,
+    width: '100%',
   },
   loginButtonText: {
     color: '#fff',
@@ -122,16 +127,24 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   orText: {
-    marginVertical: 10,
+    marginVertical: 24,
     fontSize: 16,
     color: '#999',
   },
   createAccountButton: {
-    marginTop: 10,
+    borderColor: '#0066cc',
+    borderWidth: 2,
+    width: '100%',
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 48,
   },
   createAccountText: {
     color: '#0066cc',
     fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

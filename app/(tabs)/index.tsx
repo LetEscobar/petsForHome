@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 8, // Espaçamento entre os cards
     maxWidth: '50%', // Garante que cada card ocupe 50% da largura
-    backgroundColor: '#f4f4f4',
+    backgroundColor: '#f9f9f9',
   },
   columnWrapper: {
     justifyContent: 'space-between', // Espaçamento igual entre as colunas
