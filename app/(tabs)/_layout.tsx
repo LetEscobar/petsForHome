@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Alert, Pressable } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Link, Tabs, useRouter } from 'expo-router';
-import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 
@@ -60,9 +59,9 @@ export default function TabLayout() {
               <Pressable>
                 {({ pressed }) => (
                   <FontAwesome
-                    name="info-circle"
+                    name="bell"
                     size={25}
-                    color="blue"
+                    color="#484848"
                     style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
                   />
                 )}
@@ -95,7 +94,7 @@ export default function TabLayout() {
               <FontAwesome
                 name="sign-out"
                 size={25}
-                color="red"
+                color="#484848"
                 style={{ marginRight: 15 }}
               />
             </Pressable>

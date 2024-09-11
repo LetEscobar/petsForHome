@@ -26,7 +26,7 @@ export default function Feed() {
     : cardData;
 
   return (
-    <FlatList
+    <FlatList style={styles.background}
       ListHeaderComponent={
         <View style={styles.container}>
           {/* Título e texto de filtro */}
@@ -83,6 +83,9 @@ export default function Feed() {
 }
 
 const styles = StyleSheet.create({
+  background: {
+    backgroundColor: '#f9f9f9',
+  },
   container: {
     backgroundColor: '#f9f9f9',
     padding: 16,

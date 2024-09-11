@@ -60,7 +60,7 @@ const VerPerfilUsuario = () => {
     const data = currentTab === 'Seus dados' ? fieldsSeusDados : fieldsEndereco;
 
     return (
-      <FlatList
+      <FlatList style={styles.background}
         data={data}
         keyExtractor={(item, index) => `${item.label}-${index}`}
         renderItem={({ item }) => (
@@ -107,6 +107,9 @@ const VerPerfilUsuario = () => {
 };
 
 const styles = StyleSheet.create({
+  background: {
+    backgroundColor: '#f9f9f9',
+  },
   container: {
     padding: 16,
     flex: 1,
