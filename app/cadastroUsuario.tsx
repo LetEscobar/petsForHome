@@ -1,12 +1,36 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native'; // Certifique-se de que você está usando o React Navigation
+import { useNavigation } from '@react-navigation/native';
+import { auth } from '../assets/firebaseConfig';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import MaskInput, { Masks } from 'react-native-mask-input';
 
-const CadastroUsuario = () => {
-  const [currentTab, setCurrentTab] = useState('Seus dados');
-  const [cep, setCep] = useState('');
-  const [addressData, setAddressData] = useState({
+interface AddressData {
+  endereco: string;
+  numero: string;
+  bairro: string;
+  cidade: string;
+  uf: string;
+  complemento: string;
+}
+
+interface UserData {
+  nome: string;
+  cpf: string;
+  telefone: string;
+  dataNascimento: string;
+}
+
+interface FinalizarData {
+  email: string; 
+  senha: string;
+  confirmarSenha: string;
+}
+
+const CadastroUsuario: React.FC = () => {
+  const [currentTab, setCurrentTab] = useState<'Seus dados' | 'Endereço' | 'Finalizar cadastro'>('Seus dados');
+  const [cep, setCep] = useState<string>('');
+  const [addressData, setAddressData] = useState<AddressData>({
     endereco: '',
     numero: '',
     bairro: '',
@@ -14,25 +38,25 @@ const CadastroUsuario = () => {
     uf: '',
     complemento: ''
   });
-  const [userData, setUserData] = useState({
+  const [userData, setUserData] = useState<UserData>({
     nome: '',
     cpf: '',
-    email: '',
     telefone: '',
     dataNascimento: ''
   });
-  const [finalizarData, setFinalizarData] = useState({
-    usuario: '',
+  const [finalizarData, setFinalizarData] = useState<FinalizarData>({
+    email: '',
     senha: '',
     confirmarSenha: ''
   });
-  const navigation = useNavigation(); // Use a navegação
+  const navigation = useNavigation();
 
-  const handleCepChange = async (value) => {
-    setCep(value);
-    if (value.length === 8) {
+  const handleCepChange = async (value: string) => {
+    const cleanCep = value.replace(/\D/g, '');
+    setCep(cleanCep);
+    if (cleanCep.length === 8) {
       try {
-        const response = await fetch(`https://viacep.com.br/ws/${value}/json/`);
+        const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
         const data = await response.json();
         if (data.erro) {
           Alert.alert('CEP inválido');
@@ -69,8 +93,8 @@ const CadastroUsuario = () => {
         }
         break;
       case 'Finalizar cadastro':
-        if (finalizarData.usuario.trim() !== '' && finalizarData.senha.trim() !== '' && finalizarData.confirmarSenha.trim() !== '' && finalizarData.senha === finalizarData.confirmarSenha) {
-          saveData();
+        if (finalizarData.email.trim() !== '' && finalizarData.senha.trim() !== '' && finalizarData.confirmarSenha.trim() !== '' && finalizarData.senha === finalizarData.confirmarSenha) {
+          createUserInFirebase();
         } else {
           Alert.alert('Campos obrigatórios', 'Por favor, preencha todos os campos obrigatórios e verifique se as senhas coincidem.');
         }
@@ -80,171 +104,124 @@ const CadastroUsuario = () => {
     }
   };
 
-  const saveData = async () => {
+  const createUserInFirebase = async () => {
     try {
-      // Armazenar dados no AsyncStorage
-      await AsyncStorage.setItem('@user_data', JSON.stringify({
-        nome: userData.nome,
-        cpf: userData.cpf,
-        email: userData.email,
-        telefone: userData.telefone,
-        dataNascimento: userData.dataNascimento,
-        endereco: addressData.endereco,
-        numero: addressData.numero,
-        bairro: addressData.bairro,
-        cidade: addressData.cidade,
-        uf: addressData.uf,
-        complemento: addressData.complemento,
-        usuario: finalizarData.usuario,
-        senha: finalizarData.senha
-      }));
-      Alert.alert('Cadastro completo', 'Seu cadastro foi realizado com sucesso.');
-      navigation.navigate('login'); // Redirecionar para a tela de login
-    } catch (error) {
-      Alert.alert('Erro', 'Ocorreu um erro ao salvar os dados.');
+      await createUserWithEmailAndPassword(auth, finalizarData.email, finalizarData.senha);
+
+      await signInWithEmailAndPassword(auth, finalizarData.email, finalizarData.senha);
+
+      Alert.alert('Cadastro completo', 'Seu cadastro foi realizado com sucesso!');
+      navigation.navigate('login'); 
+    } catch (error: any) {
+      console.error(error);
+
+      if (error.code === 'auth/invalid-email') {
+        Alert.alert('Erro', 'E-mail inválido.');
+      } else if (error.code === 'auth/weak-password') {
+        Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres.');
+      } else if (error.code === 'auth/email-already-in-use') {
+        Alert.alert('Erro', 'Esse e-mail já está em uso.');
+      } else {
+        Alert.alert('Erro', 'Ocorreu um erro ao criar o usuário: ' + error.message);
+      }
     }
   };
 
   const renderTabContent = () => {
     const fieldsSeusDados = [
-      { label: 'Nome completo', placeholder: 'Nome completo', value: userData.nome, onChangeText: text => setUserData({ ...userData, nome: text }) },
-      { label: 'CPF', placeholder: 'CPF', value: userData.cpf, onChangeText: text => setUserData({ ...userData, cpf: text }) },
-      { label: 'E-mail', placeholder: 'E-mail', value: userData.email, onChangeText: text => setUserData({ ...userData, email: text }) },
-      { label: 'Telefone', placeholder: 'Telefone', value: userData.telefone, onChangeText: text => setUserData({ ...userData, telefone: text }) },
-      { label: 'Data de nascimento', placeholder: 'Data de nascimento', value: userData.dataNascimento, onChangeText: text => setUserData({ ...userData, dataNascimento: text }) },
+      { label: 'Nome completo', placeholder: 'Nome completo', value: userData.nome, onChangeText: (text: string) => setUserData({ ...userData, nome: text }), secureTextEntry: false },
+      { label: 'CPF', placeholder: '000.000.000-00', value: userData.cpf, onChangeText: (text: string) => setUserData({ ...userData, cpf: text }), mask: Masks.BRL_CPF, secureTextEntry: false },
+      { label: 'Telefone', placeholder: '(00) 00000-0000', value: userData.telefone, onChangeText: (text: string) => setUserData({ ...userData, telefone: text }), mask: Masks.BRL_PHONE, secureTextEntry: false },
+      { label: 'Data de nascimento', placeholder: 'DD/MM/AAAA', value: userData.dataNascimento, onChangeText: (text: string) => setUserData({ ...userData, dataNascimento: text }), mask: Masks.DATE_DDMMYYYY, secureTextEntry: false },
     ];
 
     const fieldsEndereco = [
-      { label: 'CEP', placeholder: 'CEP', value: cep, onChangeText: handleCepChange },
-      { label: 'Endereço', placeholder: 'Endereço', value: addressData.endereco, onChangeText: text => setAddressData({ ...addressData, endereco: text }) },
-      { label: 'Número', placeholder: 'Número', value: addressData.numero, onChangeText: text => setAddressData({ ...addressData, numero: text }) },
-      { label: 'Bairro', placeholder: 'Bairro', value: addressData.bairro, onChangeText: text => setAddressData({ ...addressData, bairro: text }) },
-      { label: 'Cidade', placeholder: 'Cidade', value: addressData.cidade, onChangeText: text => setAddressData({ ...addressData, cidade: text }) },
-      { label: 'UF', placeholder: 'UF', value: addressData.uf, onChangeText: text => setAddressData({ ...addressData, uf: text }) },
-      { label: 'Complemento', placeholder: 'Complemento', value: addressData.complemento, onChangeText: text => setAddressData({ ...addressData, complemento: text }) },
+      { label: 'CEP', placeholder: '00000-000', value: cep, onChangeText: handleCepChange, mask: Masks.ZIP_CODE, secureTextEntry: false },
+      { label: 'Endereço', placeholder: 'Endereço', value: addressData.endereco, onChangeText: (text: string) => setAddressData({ ...addressData, endereco: text }), secureTextEntry: false },
+      { label: 'Número', placeholder: 'Número', value: addressData.numero, onChangeText: (text: string) => setAddressData({ ...addressData, numero: text }), secureTextEntry: false },
+      { label: 'Bairro', placeholder: 'Bairro', value: addressData.bairro, onChangeText: (text: string) => setAddressData({ ...addressData, bairro: text }), secureTextEntry: false },
+      { label: 'Cidade', placeholder: 'Cidade', value: addressData.cidade, onChangeText: (text: string) => setAddressData({ ...addressData, cidade: text }), secureTextEntry: false },
+      { label: 'UF', placeholder: 'UF', value: addressData.uf, onChangeText: (text: string) => setAddressData({ ...addressData, uf: text }), secureTextEntry: false },
+      { label: 'Complemento', placeholder: 'Complemento', value: addressData.complemento, onChangeText: (text: string) => setAddressData({ ...addressData, complemento: text }), secureTextEntry: false },
     ];
 
     const fieldsFinalizar = [
-      { label: 'Usuário', placeholder: 'Usuário', value: finalizarData.usuario, onChangeText: text => setFinalizarData({ ...finalizarData, usuario: text }) },
-      { label: 'Senha', placeholder: 'Senha', value: finalizarData.senha, secureTextEntry: true, onChangeText: text => setFinalizarData({ ...finalizarData, senha: text }) },
-      { label: 'Confirmar Senha', placeholder: 'Confirmar Senha', value: finalizarData.confirmarSenha, secureTextEntry: true, onChangeText: text => setFinalizarData({ ...finalizarData, confirmarSenha: text }) },
+      { label: 'E-mail', placeholder: 'E-mail', value: finalizarData.email, onChangeText: (text: string) => setFinalizarData({ ...finalizarData, email: text }) },
+      { label: 'Senha', placeholder: 'Senha', value: finalizarData.senha, secureTextEntry: true, onChangeText: (text: string) => setFinalizarData({ ...finalizarData, senha: text }) },
+      { label: 'Confirmar Senha', placeholder: 'Confirmar Senha', value: finalizarData.confirmarSenha, secureTextEntry: true, onChangeText: (text: string) => setFinalizarData({ ...finalizarData, confirmarSenha: text }) },
     ];
 
     const data = currentTab === 'Seus dados' ? fieldsSeusDados : currentTab === 'Endereço' ? fieldsEndereco : fieldsFinalizar;
 
-    const navigation = useNavigation();
-
-    useLayoutEffect(() => {
-      // Define o título do modal
-      navigation.setOptions({
-        title: 'Criar conta',
-      });
-    }, [navigation]);
-
     return (
       <FlatList
         data={data}
-        keyExtractor={(item, index) => `${item.label}-${index}`}
         renderItem={({ item }) => (
-          <View>
+          <View style={styles.inputContainer}>
             <Text style={styles.label}>{item.label}</Text>
-            <TextInput
-              style={styles.input}
-              placeholder={item.placeholder}
-              value={item.value}
-              secureTextEntry={item.secureTextEntry}
-              onChangeText={item.onChangeText}
-              editable={!item.disabled}
-            />
+            {item.mask ? (
+              <MaskInput
+                style={styles.input}
+                mask={item.mask}
+                value={item.value}
+                onChangeText={item.onChangeText}
+                placeholder={item.placeholder}
+              />
+            ) : (
+              <TextInput
+                style={styles.input}
+                value={item.value}
+                onChangeText={item.onChangeText}
+                placeholder={item.placeholder}
+                secureTextEntry={item.secureTextEntry}
+              />
+            )}
           </View>
         )}
-        ListFooterComponent={() => (
-          <TouchableOpacity style={styles.nextButton} onPress={handleNextStep}>
-            <Text style={styles.nextButtonText}>{currentTab === 'Finalizar cadastro' ? 'Salvar' : 'Continuar cadastro'}</Text>
-          </TouchableOpacity>
-        )}
-        contentContainerStyle={styles.tabContent}
+        keyExtractor={(item, index) => index.toString()}
       />
     );
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.tabHeader}>
-        <Text
-          style={[styles.tabItem, currentTab === 'Seus dados' && styles.activeTab]}
-          onPress={() => setCurrentTab('Seus dados')}
-        >
-          Seus dados
-        </Text>
-        <Text
-          style={[styles.tabItem, currentTab === 'Endereço' && styles.activeTab]}
-          onPress={() => setCurrentTab('Endereço')}
-        >
-          Endereço
-        </Text>
-        <Text
-          style={[styles.tabItem, currentTab === 'Finalizar cadastro' && styles.activeTab]}
-          onPress={() => setCurrentTab('Finalizar cadastro')}
-        >
-          Finalizar
-        </Text>
-      </View>
       {renderTabContent()}
+      <TouchableOpacity style={styles.button} onPress={handleNextStep}>
+        <Text style={styles.buttonText}>Continuar</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
     flex: 1,
-    backgroundColor: '#f9f9f9',
+    padding: 20,
   },
-  tabHeader: {
-    flexDirection: 'row',
-    marginBottom: 16,
-  },
-  tabItem: {
-    flex: 1,
-    textAlign: 'center',
-    padding: 8,
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-  },
-  activeTab: {
-    borderBottomWidth: 2,
-    borderColor: '#000',
-  },
-  tabContent: {
-    paddingBottom: 100, // Espaço para não sobrepor o botão salvar ao fim da tela
+  inputContainer: {
+    marginBottom: 15,
   },
   label: {
     fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: 5,
   },
   input: {
-    height: 56,
+    height: 40,
+    borderColor: '#ccc',
     borderWidth: 1,
-    paddingHorizontal: 8,
-    marginBottom: 24,
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    borderColor: '#e4e4e7',
+    borderRadius: 5,
+    paddingLeft: 10,
   },
-  nextButton: {
-    backgroundColor: '#004dd3',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 48,
+  button: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 5,
     marginTop: 20,
   },
-  nextButtonText: {
+  buttonText: {
     color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
+    textAlign: 'center',
+    fontSize: 18,
   },
 });
 

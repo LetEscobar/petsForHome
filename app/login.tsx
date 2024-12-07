@@ -1,89 +1,81 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import FontAwesome from '@expo/vector-icons/FontAwesome'; // Importar o ícone
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 
 const LoginScreen = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // Estado para mostrar ou ocultar a senha
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleLogin = async () => {
+    const auth = getAuth();
     try {
-      const userData = await AsyncStorage.getItem('@user_data');
-      if (userData) {
-        const { usuario: storedUsuario, senha: storedSenha } = JSON.parse(userData);
-        if (username === storedUsuario && password === storedSenha) {
-          // Login bem-sucedido
-          router.push('/'); // Redireciona para a tela principal
-        } else {
-          Alert.alert('Erro de Login', 'Usuário ou senha incorretos.');
-        }
-      } else {
-        Alert.alert('Erro', 'Nenhum usuário encontrado.');
+      const userCredential = await signInWithEmailAndPassword(auth, username, password);
+      if (userCredential) {
+        // Login bem-sucedido
+        router.push('/');
       }
     } catch (error) {
-      Alert.alert('Erro', 'Ocorreu um erro ao realizar o login.');
+      if (error.code === 'auth/user-not-found') {
+        Alert.alert('Erro de Login', 'Usuário não encontrado.');
+      } else if (error.code === 'auth/wrong-password') {
+        Alert.alert('Erro de Login', 'Senha incorreta.');
+      } else {
+        Alert.alert('Erro', 'Ocorreu um erro ao realizar o login.');
+      }
     }
   };
 
   const handleCreateAccount = () => {
-    router.push('/cadastroUsuario'); // Redireciona para a tela de cadastro
+    router.push('/cadastroUsuario');
   };
 
   return (
     <View style={styles.container}>
-      {/* Logo */}
       <Image source={require('../assets/images/logo.png')} style={styles.logo} />
 
-      {/* Título */}
       <Text style={styles.title}>Seja Bem-Vindo ao Pets For Home!</Text>
 
-      {/* Campo de usuário */}
       <TextInput
-        placeholder="Usuário"
+        placeholder="E-mail"
         style={[styles.input, { marginBottom: 12 }]}
         value={username}
         onChangeText={setUsername}
       />
 
-      {/* Campo de senha com ícone de olho dentro */}
       <View style={styles.passwordContainer}>
         <TextInput
           placeholder="Senha"
-          secureTextEntry={!showPassword} // Alternar visibilidade da senha
+          secureTextEntry={!showPassword}
           style={styles.input}
           value={password}
           onChangeText={setPassword}
         />
         <TouchableOpacity
-          onPress={() => setShowPassword(!showPassword)} // Alterna entre mostrar e ocultar a senha
+          onPress={() => setShowPassword(!showPassword)}
           style={styles.eyeIcon}
         >
           <FontAwesome
-            name={showPassword ? 'eye-slash' : 'eye'} // Ícone muda de acordo com o estado
+            name={showPassword ? 'eye-slash' : 'eye'}
             size={20}
             color="#333"
           />
         </TouchableOpacity>
       </View>
 
-      {/* Esqueci minha senha */}
       <TouchableOpacity>
         <Text style={styles.forgotPassword}>Esqueci minha senha</Text>
       </TouchableOpacity>
 
-      {/* Botão de login */}
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Fazer login</Text>
       </TouchableOpacity>
 
-      {/* Divisor com "ou" */}
       <Text style={styles.orText}>ou</Text>
 
-      {/* Botão de criar conta */}
       <TouchableOpacity style={styles.createAccountButton} onPress={handleCreateAccount}>
         <Text style={styles.createAccountText}>Criar uma conta</Text>
       </TouchableOpacity>
@@ -102,9 +94,9 @@ const styles = StyleSheet.create({
   logo: {
     width: 150,
     height: undefined,
-    aspectRatio: 1, // Mantém a proporção da imagem
+    aspectRatio: 1, 
     marginBottom: 20,
-    resizeMode: 'contain', // Redimensiona a imagem para caber no contêiner sem cortar
+    resizeMode: 'contain',
   },
   title: {
     fontSize: 18,
@@ -131,7 +123,7 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     position: 'absolute',
-    right: 10, // Alinha o ícone à direita
+    right: 10,
     padding: 10,
   },
   forgotPassword: {
