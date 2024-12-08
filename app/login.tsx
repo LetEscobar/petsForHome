@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
 
 const LoginScreen = () => {
   const [username, setUsername] = useState('');
@@ -15,8 +15,16 @@ const LoginScreen = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, username, password);
       if (userCredential) {
-        // Login bem-sucedido
-        router.push('/');
+        // Verificando se o usuário está autenticado
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            // Usuário autenticado, redirecionar
+            router.push('/');
+          } else {
+            // Usuário não está autenticado, mostrar alerta
+            Alert.alert('Erro', 'Não foi possível autenticar o usuário.');
+          }
+        });
       }
     } catch (error) {
       if (error.code === 'auth/user-not-found') {

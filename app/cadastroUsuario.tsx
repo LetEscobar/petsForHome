@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert } 
 import { useNavigation } from '@react-navigation/native';
 import { auth } from '../assets/firebaseConfig';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { getFirestore, setDoc, doc } from 'firebase/firestore';
 import MaskInput, { Masks } from 'react-native-mask-input';
 
 interface AddressData {
@@ -22,7 +23,7 @@ interface UserData {
 }
 
 interface FinalizarData {
-  email: string; 
+  email: string;
   senha: string;
   confirmarSenha: string;
 }
@@ -50,6 +51,7 @@ const CadastroUsuario: React.FC = () => {
     confirmarSenha: ''
   });
   const navigation = useNavigation();
+  const db = getFirestore();
 
   const handleCepChange = async (value: string) => {
     const cleanCep = value.replace(/\D/g, '');
@@ -106,12 +108,32 @@ const CadastroUsuario: React.FC = () => {
 
   const createUserInFirebase = async () => {
     try {
-      await createUserWithEmailAndPassword(auth, finalizarData.email, finalizarData.senha);
+      // Criação do usuário no Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, finalizarData.email, finalizarData.senha);
+      const user = userCredential.user;
 
+      // Salvar os dados do usuário no Firestore
+      const userRef = doc(db, 'usuarios', user.uid);  // Usando o UID do usuário como o ID no Firestore
+      await setDoc(userRef, {
+        nome: userData.nome,
+        cpf: userData.cpf,
+        telefone: userData.telefone,
+        dataNascimento: userData.dataNascimento,
+        endereco: addressData.endereco,
+        numero: addressData.numero,
+        bairro: addressData.bairro,
+        cidade: addressData.cidade,
+        uf: addressData.uf,
+        complemento: addressData.complemento,
+        cep: cep,
+        email: finalizarData.email
+      });
+
+      // Efetuar o login após cadastro
       await signInWithEmailAndPassword(auth, finalizarData.email, finalizarData.senha);
 
       Alert.alert('Cadastro completo', 'Seu cadastro foi realizado com sucesso!');
-      navigation.navigate('login'); 
+      navigation.navigate('login');
     } catch (error: any) {
       console.error(error);
 
@@ -151,43 +173,55 @@ const CadastroUsuario: React.FC = () => {
       { label: 'Confirmar Senha', placeholder: 'Confirmar Senha', value: finalizarData.confirmarSenha, secureTextEntry: true, onChangeText: (text: string) => setFinalizarData({ ...finalizarData, confirmarSenha: text }) },
     ];
 
-    const data = currentTab === 'Seus dados' ? fieldsSeusDados : currentTab === 'Endereço' ? fieldsEndereco : fieldsFinalizar;
+    const renderFields = (fields: any[]) => {
+      return fields.map((field, index) => (
+        <View key={index} style={styles.inputContainer}>
+          <Text style={styles.label}>{field.label}</Text>
+          {field.mask ? (
+            <MaskInput
+              value={field.value}
+              onChangeText={field.onChangeText}
+              mask={field.mask}
+              style={styles.input}
+              placeholder={field.placeholder}
+            />
+          ) : (
+            <TextInput
+              value={field.value}
+              onChangeText={field.onChangeText}
+              style={styles.input}
+              placeholder={field.placeholder}
+              secureTextEntry={field.secureTextEntry}
+            />
+          )}
+        </View>
+      ));
+    };
 
-    return (
-      <FlatList
-        data={data}
-        renderItem={({ item }) => (
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>{item.label}</Text>
-            {item.mask ? (
-              <MaskInput
-                style={styles.input}
-                mask={item.mask}
-                value={item.value}
-                onChangeText={item.onChangeText}
-                placeholder={item.placeholder}
-              />
-            ) : (
-              <TextInput
-                style={styles.input}
-                value={item.value}
-                onChangeText={item.onChangeText}
-                placeholder={item.placeholder}
-                secureTextEntry={item.secureTextEntry}
-              />
-            )}
-          </View>
-        )}
-        keyExtractor={(item, index) => index.toString()}
-      />
-    );
+    switch (currentTab) {
+      case 'Seus dados':
+        return renderFields(fieldsSeusDados);
+      case 'Endereço':
+        return renderFields(fieldsEndereco);
+      case 'Finalizar cadastro':
+        return renderFields(fieldsFinalizar);
+      default:
+        return null;
+    }
   };
 
   return (
     <View style={styles.container}>
-      {renderTabContent()}
-      <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-        <Text style={styles.buttonText}>Continuar</Text>
+      <Text style={styles.title}>Cadastro de usuário</Text>
+      <FlatList
+        data={[{ key: currentTab }]}
+        renderItem={({ item }) => renderTabContent()}
+        keyExtractor={(item) => item.key}
+      />
+      <TouchableOpacity style={styles.nextButton} onPress={handleNextStep}>
+        <Text style={styles.nextButtonText}>
+          {currentTab === 'Finalizar cadastro' ? 'Finalizar cadastro' : 'Próximo'}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -196,29 +230,34 @@ const CadastroUsuario: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
   },
   inputContainer: {
     marginBottom: 15,
   },
   label: {
     fontSize: 16,
-    marginBottom: 5,
+    fontWeight: '500',
   },
   input: {
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingLeft: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    padding: 8,
+    fontSize: 16,
   },
-  button: {
-    backgroundColor: '#4CAF50',
-    padding: 10,
-    borderRadius: 5,
+  nextButton: {
+    backgroundColor: '#007bff',
+    padding: 12,
     marginTop: 20,
+    borderRadius: 5,
   },
-  buttonText: {
+  nextButtonText: {
     color: '#fff',
     textAlign: 'center',
     fontSize: 18,
