@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, FlatList, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { db } from '../../assets/firebaseConfig'; // Importe a configuração do Firebase
+import { collection, getDocs } from 'firebase/firestore';
 
-const initialPetsData = [
-  { id: '1', name: 'Rex', gender: 'Macho', type: 'Cachorro', image: 'https://picsum.photos/200/600' },
-  { id: '2', name: 'Luna', gender: 'Fêmea', type: 'Gato', image: 'https://picsum.photos/200/601' },
-  { id: '3', name: 'Bobby', gender: 'Macho', type: 'Cachorro', image: 'https://picsum.photos/200/602' },
-  { id: '4', name: 'Mia', gender: 'Fêmea', type: 'Gato', image: 'https://picsum.photos/200/603' },
-  { id: '5', name: 'Rocky', gender: 'Macho', type: 'Cachorro', image: 'https://picsum.photos/200/604' },
-  { id: '6', name: 'Bella', gender: 'Fêmea', type: 'Gato', image: 'https://picsum.photos/200/605' },
-  { id: '7', name: 'Thor', gender: 'Macho', type: 'Cachorro', image: 'https://picsum.photos/200/606' },
-];
+interface Pet {
+  id: string;
+  name: string;
+  gender: string;
+  type: string;
+  image: string;
+}
 
-const PetCard = ({ pet, onDelete, navigation }) => (
+const PetCard = ({ pet, onDelete, navigation }: { pet: Pet; onDelete: (pet: Pet) => void; navigation: any }) => (
   <View style={styles.card}>
     <Image source={{ uri: pet.image }} style={styles.petImage} />
     <View style={styles.infoContainer}>
@@ -39,10 +39,26 @@ const PetCard = ({ pet, onDelete, navigation }) => (
   </View>
 );
 
-
 const RegisteredPetsScreen = () => {
-  const [petsData, setPetsData] = useState(initialPetsData);
-  const navigation = useNavigation(); // Mova isso para dentro do componente
+  const [petsData, setPetsData] = useState([]);
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    const fetchPets = async () => {
+      try {
+        const petsSnapshot = await getDocs(collection(db, 'pets')); // Acesse a coleção "pets" no Firestore
+        const petsList = petsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setPetsData(petsList);
+      } catch (error) {
+        console.error("Erro ao buscar os pets:", error);
+      }
+    };
+
+    fetchPets();
+  }, []);
 
   const confirmDelete = (pet) => {
     Alert.alert(
@@ -63,6 +79,7 @@ const RegisteredPetsScreen = () => {
   };
 
   const handleDelete = (pet) => {
+    // Função para excluir o pet do Firestore (pode ser implementada depois)
     setPetsData(petsData.filter((p) => p.id !== pet.id));
     Alert.alert("Pet Excluído", `${pet.name} foi excluído da sua lista de pets cadastrados.`);
   };
@@ -81,7 +98,6 @@ const RegisteredPetsScreen = () => {
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   screen: {

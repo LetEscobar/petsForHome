@@ -3,6 +3,8 @@ import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Image,
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { db } from '../../assets/firebaseConfig'; // Importando a configuração do Firebase
+import { collection, addDoc } from 'firebase/firestore';
 
 const PetRegistrationScreen = () => {
   const [name, setName] = useState('');
@@ -52,19 +54,29 @@ const PetRegistrationScreen = () => {
     );
   };
 
-  const handleSave = () => {
-    console.log({
-      name,
-      sex,
-      type,
-      ageYears,
-      ageMonths,
-      requirements,
-      castrado,
-      vacinasEmDia,
-      images,
-    });
-    alert('Informações salvas com sucesso!');
+  // Função para salvar os dados do pet no Firestore
+  const handleSave = async () => {
+    try {
+      // Dados do pet
+      const petData = {
+        name,
+        sex,
+        type,
+        age: { years: ageYears, months: ageMonths },
+        requirements,
+        castrado,
+        vacinasEmDia,
+        images,
+      };
+
+      // Salvando no Firestore
+      const docRef = await addDoc(collection(db, "pets"), petData);
+      console.log("Pet registrado com ID: ", docRef.id);
+      alert('Informações salvas com sucesso!');
+    } catch (error) {
+      console.error("Erro ao salvar pet: ", error);
+      alert('Erro ao salvar informações do pet');
+    }
   };
 
   return (
@@ -196,6 +208,7 @@ const PetRegistrationScreen = () => {
     </ScrollView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
