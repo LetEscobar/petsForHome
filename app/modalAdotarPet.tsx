@@ -1,7 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
 import { Platform, ScrollView, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Text, View } from '@/components/Themed';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import { db } from '../assets/firebaseConfig.js'; 
+import { doc, getDoc } from 'firebase/firestore'; 
 
 // Função para gerar informações aleatórias caso não haja pets cadastrados
 const getRandomPetData = () => ({
@@ -23,31 +25,62 @@ const getRandomPetData = () => ({
 import { RouteProp } from '@react-navigation/native';
 
 type RootStackParamList = {
-  ModalScreen: { petData: any };
+  ModalScreen: { petId: string }; 
 };
 
 type ModalScreenRouteProp = RouteProp<RootStackParamList, 'ModalScreen'>;
 
 export default function ModalScreen({ route }: { route: ModalScreenRouteProp }) {
-  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+  const [petData, setPetData] = useState<any>(getRandomPetData()); // Inicializa com dados locais
+  const [loading, setLoading] = useState<boolean>(true); 
   const bottomSheetRef = useRef(null);
-  
-  // Dados do pet vindos do card ou aleatórios
-  const petData = route?.params?.petData || getRandomPetData();
+
+  const petId = route?.params?.petId;
+
+  const fetchPetData = async (petId: string) => {
+    try {
+      const petDocRef = doc(db, 'pets', petId);
+      const petDoc = await getDoc(petDocRef); 
+
+      if (petDoc.exists()) {
+        setPetData(petDoc.data());  // Atualiza com dados do Firestore
+      } else {
+        console.log('Pet não encontrado!');
+        setPetData(getRandomPetData()); // Caso pet não exista, use os dados locais
+      }
+    } catch (error) {
+      console.error('Erro ao buscar dados do pet:', error);
+      setPetData(getRandomPetData());  // Caso erro na requisição, use dados locais
+    } finally {
+      setLoading(false); // Finaliza carregamento
+    }
+  };
+
+  useEffect(() => {
+    if (petId) {
+      fetchPetData(petId); // Carrega dados se petId for fornecido
+    } else {
+      setPetData(getRandomPetData());  
+      setLoading(false); 
+    }
+  }, [petId]);
+
+  if (loading) {
+    return <Text>Carregando...</Text>; // Exibe mensagem de carregamento
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Informações do Pet</Text>
 
-      {/* Exibindo as imagens do pet em uma galeria */}
       <ScrollView horizontal contentContainerStyle={styles.gallery}>
-        {petData.images.map((image, index) => (
+        {petData.images.map((image: string, index: number) => (
           <Image key={index} source={{ uri: image }} style={styles.image} resizeMode="cover" />
         ))}
       </ScrollView>
 
       <View style={styles.card}>
-      <View style={styles.infoRow}>
+        <View style={styles.infoRow}>
           <Text style={styles.label}>Nome:</Text>
           <Text style={styles.info}>{petData.name}</Text>
         </View>
@@ -105,7 +138,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
-    color:'#000'
+    color: '#000'
   },
   gallery: {
     flexDirection: 'row',
