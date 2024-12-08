@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail } from 'firebase/auth';
 
 const LoginScreen = () => {
   const [username, setUsername] = useState('');
@@ -38,10 +38,28 @@ const LoginScreen = () => {
     router.push('/cadastroUsuario');
   };
 
+  const handlePasswordReset = async () => {
+    if (!username) {
+      Alert.alert('Erro', 'Por favor, insira seu e-mail.');
+      return;
+    }
+    
+    const auth = getAuth();
+    try {
+      await sendPasswordResetEmail(auth, username);
+      Alert.alert('Sucesso', 'Link de redefinição de senha enviado!');
+    } catch (error) {
+      if (error.code === 'auth/user-not-found') {
+        Alert.alert('Erro', 'Usuário não encontrado.');
+      } else {
+        Alert.alert('Erro', 'Ocorreu um erro ao enviar o link de redefinição de senha.');
+      }
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Image source={require('../assets/images/logo.png')} style={styles.logo} />
-
       <Text style={styles.title}>Seja Bem-Vindo ao Pets For Home!</Text>
 
       <TextInput
@@ -70,7 +88,11 @@ const LoginScreen = () => {
           />
         </TouchableOpacity>
       </View>
-      
+
+      <TouchableOpacity onPress={handlePasswordReset}>
+        <Text style={styles.forgotPassword}>Esqueci minha senha</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Fazer login</Text>
       </TouchableOpacity>
