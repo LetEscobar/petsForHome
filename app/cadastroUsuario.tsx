@@ -228,6 +228,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+    backgroundColor: '#f9f9f9',
   },
   title: {
     fontSize: 24,
@@ -243,16 +244,22 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   input: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    padding: 8,
-    fontSize: 16,
+    height: 56,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderColor: '#e4e4e7',
+    width: '100%',
   },
   nextButton: {
-    backgroundColor: '#007bff',
-    padding: 12,
+    backgroundColor: '#004dd3',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 48,
     marginTop: 20,
-    borderRadius: 5,
+    width: '100%',
   },
   nextButtonText: {
     color: '#fff',

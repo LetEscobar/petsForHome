@@ -86,6 +86,16 @@ export default function TabLayout() {
         options={{
           title: 'Meu Perfil',
           tabBarIcon: ({ color }) => <TabBarIcon name="user-circle" color={color} />,
+          headerRight: () => (
+            <Pressable onPress={handleLogout}>
+              <FontAwesome
+                name="sign-out"
+                size={25}
+                color="#484848"
+                style={{ marginRight: 15 }}
+              />
+            </Pressable>
+          ),
         }}
       />
     </Tabs>
