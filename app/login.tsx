@@ -15,13 +15,10 @@ const LoginScreen = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, username, password);
       if (userCredential) {
-        // Verificando se o usuário está autenticado
         onAuthStateChanged(auth, (user) => {
           if (user) {
-            // Usuário autenticado, redirecionar
             router.push('/');
           } else {
-            // Usuário não está autenticado, mostrar alerta
             Alert.alert('Erro', 'Não foi possível autenticar o usuário.');
           }
         });

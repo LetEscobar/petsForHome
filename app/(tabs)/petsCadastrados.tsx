@@ -2,20 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, FlatList, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { db } from '../../assets/firebaseConfig'; // Importe a configuração do Firebase
-import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../../assets/firebaseConfig';
+import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore'; 
 
 interface Pet {
   id: string;
   name: string;
   gender: string;
   type: string;
-  image: string;
+  image: string[0]; 
 }
 
 const PetCard = ({ pet, onDelete, navigation }: { pet: Pet; onDelete: (pet: Pet) => void; navigation: any }) => (
   <View style={styles.card}>
-    <Image source={{ uri: pet.image }} style={styles.petImage} />
+    <Image
+  source={{ uri: pet.image?.[0] || 'https://res.cloudinary.com/dvjtr3on8/image/upload/v1733663318/samples/cloudinary-icon.png' }} 
+  style={styles.petImage}
+/>
+
+
     <View style={styles.infoContainer}>
       <Text style={styles.petName}>{pet.name}</Text>
       <Text style={styles.petDetails}>{pet.gender}</Text>
@@ -24,7 +29,7 @@ const PetCard = ({ pet, onDelete, navigation }: { pet: Pet; onDelete: (pet: Pet)
     <View style={styles.iconContainer}>
       <TouchableOpacity style={styles.iconButton}>
         <FontAwesome name="info-circle" size={24} color="black" 
-        onPress={() => navigation.navigate('modalInfoPet', { pet })}/>
+          onPress={() => navigation.navigate('modalInfoPet', { pet })} />
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.iconButton}
@@ -40,17 +45,18 @@ const PetCard = ({ pet, onDelete, navigation }: { pet: Pet; onDelete: (pet: Pet)
 );
 
 const RegisteredPetsScreen = () => {
-  const [petsData, setPetsData] = useState([]);
+  const [petsData, setPetsData] = useState<Pet[]>([]);
   const navigation = useNavigation();
 
   useEffect(() => {
     const fetchPets = async () => {
       try {
-        const petsSnapshot = await getDocs(collection(db, 'pets')); // Acesse a coleção "pets" no Firestore
+        const petsSnapshot = await getDocs(collection(db, 'pets'));
         const petsList = petsSnapshot.docs.map(doc => ({
           id: doc.id,
-          ...doc.data()
-        }));
+          ...doc.data(),
+          image: doc.data().images || [],
+        })) as Pet[];
         setPetsData(petsList);
       } catch (error) {
         console.error("Erro ao buscar os pets:", error);
@@ -60,7 +66,7 @@ const RegisteredPetsScreen = () => {
     fetchPets();
   }, []);
 
-  const confirmDelete = (pet) => {
+  const confirmDelete = (pet: Pet) => {
     Alert.alert(
       "Confirmação de Exclusão",
       `Tem certeza que deseja excluir ${pet.name} da sua lista de pets?`,
@@ -78,10 +84,16 @@ const RegisteredPetsScreen = () => {
     );
   };
 
-  const handleDelete = (pet) => {
-    // Função para excluir o pet do Firestore (pode ser implementada depois)
-    setPetsData(petsData.filter((p) => p.id !== pet.id));
-    Alert.alert("Pet Excluído", `${pet.name} foi excluído da sua lista de pets cadastrados.`);
+  const handleDelete = async (pet: Pet) => {
+    try {
+      const petRef = doc(db, 'pets', pet.id); 
+      await deleteDoc(petRef); 
+      setPetsData(petsData.filter((p) => p.id !== pet.id)); 
+      Alert.alert("Pet Excluído", `${pet.name} foi excluído da sua lista de pets cadastrados.`);
+    } catch (error) {
+      console.error("Erro ao excluir o pet:", error);
+      Alert.alert("Erro", "Não foi possível excluir o pet. Tente novamente.");
+    }
   };
 
   return (

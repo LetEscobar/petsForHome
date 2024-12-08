@@ -3,8 +3,11 @@ import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Image,
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { db } from '../../assets/firebaseConfig'; // Importando a configuração do Firebase
+import { db, auth } from '../../assets/firebaseConfig';
 import { collection, addDoc } from 'firebase/firestore';
+
+const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dvjtr3on8/image/upload';
+const UPLOAD_PRESET = 'pets-cadastrados';
 
 const PetRegistrationScreen = () => {
   const [name, setName] = useState('');
@@ -16,48 +19,78 @@ const PetRegistrationScreen = () => {
   const [images, setImages] = useState([]);
   const [castrado, setCastrado] = useState(false);
   const [vacinasEmDia, setVacinasEmDia] = useState(false);
+  const [userId, setUserId] = useState('');
 
-  // Função para fazer upload de imagem
   const handleUpload = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       alert('Precisamos de permissão para acessar suas mídias!');
       return;
     }
-
+  
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
-
+  
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      setImages([...images, result.assets[0].uri]);
+      const localUri = result.assets[0].uri;
+      const formData = new FormData();
+  
+      formData.append('file', {
+        uri: localUri,
+        type: 'image/jpeg',
+        name: 'upload.jpg',
+      });
+      formData.append('upload_preset', UPLOAD_PRESET);
+  
+      try {
+        const response = await fetch(CLOUDINARY_URL, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+  
+        const data = await response.json();
+  
+        if (response.ok && data.secure_url) {
+          setImages([...images, data.secure_url]);
+          alert('Upload realizado com sucesso!');
+        } else {
+          console.error('Erro na resposta do Cloudinary:', data);
+          alert('Erro ao fazer upload da imagem.');
+        }
+      } catch (error) {
+        console.error('Erro ao enviar imagem para o Cloudinary:', error);
+        alert('Erro ao fazer upload da imagem.');
+      }
     }
   };
 
-  // Função para excluir uma imagem
   const handleDeleteImage = (uri) => {
-    Alert.alert(
-      'Excluir Imagem',
-      'Tem certeza que deseja excluir esta imagem?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          onPress: () => {
-            setImages(images.filter(image => image !== uri));
-          },
+    Alert.alert('Excluir Imagem', 'Tem certeza que deseja excluir esta imagem?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Excluir',
+        onPress: () => {
+          setImages(images.filter((image) => image !== uri));
         },
-      ]
-    );
+      },
+    ]);
   };
 
-  // Função para salvar os dados do pet no Firestore
   const handleSave = async () => {
     try {
-      // Dados do pet
+      const user = auth.currentUser;
+      if (!user) {
+        alert('Você precisa estar logado para cadastrar um pet!');
+        return;
+      }
+
       const petData = {
         name,
         sex,
@@ -67,14 +100,14 @@ const PetRegistrationScreen = () => {
         castrado,
         vacinasEmDia,
         images,
+        userId: user.uid,
       };
 
-      // Salvando no Firestore
-      const docRef = await addDoc(collection(db, "pets"), petData);
-      console.log("Pet registrado com ID: ", docRef.id);
+      const docRef = await addDoc(collection(db, 'pets'), petData);
+      console.log('Pet registrado com ID: ', docRef.id);
       alert('Informações salvas com sucesso!');
     } catch (error) {
-      console.error("Erro ao salvar pet: ", error);
+      console.error('Erro ao salvar pet: ', error);
       alert('Erro ao salvar informações do pet');
     }
   };
@@ -82,8 +115,6 @@ const PetRegistrationScreen = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Cadastre seu pet aqui</Text>
-
-      {/* Input de Nome */}
       <Text style={styles.label}>Nome do pet</Text>
       <TextInput
         style={styles.input}
@@ -91,30 +122,16 @@ const PetRegistrationScreen = () => {
         value={name}
         onChangeText={setName}
       />
-
-      {/* Dropdown de Sexo */}
       <Text style={styles.label}>Sexo</Text>
-      <Picker
-        selectedValue={sex}
-        style={styles.picker}
-        onValueChange={(itemValue) => setSex(itemValue)}
-      >
+      <Picker selectedValue={sex} style={styles.picker} onValueChange={(itemValue) => setSex(itemValue)}>
         <Picker.Item label="Feminino" value="Feminino" />
         <Picker.Item label="Masculino" value="Masculino" />
       </Picker>
-
-      {/* Dropdown de Tipo */}
       <Text style={styles.label}>Tipo de animal</Text>
-      <Picker
-        selectedValue={type}
-        style={styles.picker}
-        onValueChange={(itemValue) => setType(itemValue)}
-      >
+      <Picker selectedValue={type} style={styles.picker} onValueChange={(itemValue) => setType(itemValue)}>
         <Picker.Item label="Gato" value="Gato" />
         <Picker.Item label="Cachorro" value="Cachorro" />
       </Picker>
-
-      {/* Idade Aproximada */}
       <Text style={styles.label}>Idade Aproximada</Text>
       <View style={styles.ageContainer}>
         <TextInput
@@ -132,42 +149,6 @@ const PetRegistrationScreen = () => {
           onChangeText={setAgeMonths}
         />
       </View>
-
-      {/* Campo Castrado */}
-      <Text style={styles.label}>Castrado</Text>
-      <View style={styles.booleanContainer}>
-        <TouchableOpacity
-          style={[styles.booleanButton, castrado ? styles.booleanSelected : null]}
-          onPress={() => setCastrado(true)}
-        >
-          <Text style={styles.booleanButtonText}>Sim</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.booleanButton, !castrado ? styles.booleanSelected : null]}
-          onPress={() => setCastrado(false)}
-        >
-          <Text style={styles.booleanButtonText}>Não</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Campo Vacinas em Dia */}
-      <Text style={styles.label}>Vacinas em dia</Text>
-      <View style={styles.booleanContainer}>
-        <TouchableOpacity
-          style={[styles.booleanButton, vacinasEmDia ? styles.booleanSelected : null]}
-          onPress={() => setVacinasEmDia(true)}
-        >
-          <Text style={styles.booleanButtonText}>Sim</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.booleanButton, !vacinasEmDia ? styles.booleanSelected : null]}
-          onPress={() => setVacinasEmDia(false)}
-        >
-          <Text style={styles.booleanButtonText}>Não</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Requisitos de Adoção */}
       <Text style={styles.label}>Requisitos de Adoção</Text>
       <TextInput
         style={styles.textarea}
@@ -177,38 +158,28 @@ const PetRegistrationScreen = () => {
         value={requirements}
         onChangeText={setRequirements}
       />
-
-      {/* Upload de Mídias */}
       <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
         <Text style={styles.uploadButtonText}>Fazer upload de mídias</Text>
         <Icon name="upload" size={20} color="#004dd3" />
       </TouchableOpacity>
-
-      {/* Carrossel de Imagens */}
       {images.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
           {images.map((uri, index) => (
             <View key={index} style={styles.imageContainer}>
               <Image source={{ uri }} style={styles.imageCarousel} />
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => handleDeleteImage(uri)}
-              >
+              <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteImage(uri)}>
                 <Icon name="delete" size={24} color="#fff" />
               </TouchableOpacity>
             </View>
           ))}
         </ScrollView>
       )}
-
-      {/* Botão de Salvar */}
       <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
         <Text style={styles.saveButtonText}>Salvar informações do pet</Text>
       </TouchableOpacity>
     </ScrollView>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -273,80 +244,51 @@ const styles = StyleSheet.create({
     borderColor: '#e4e4e7',
   },
   uploadButton: {
-    borderRadius: 12,
-    borderStyle: 'solid',
-    borderColor: '#004dd3',
-    borderWidth: 1,
-    backgroundColor: '#fff',
-    padding: 10,
-    alignItems: 'center',
-    marginBottom: 12,
     flexDirection: 'row',
-    gap: 24,
-    alignContent: 'center',
+    alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 16,
+    marginBottom: 24,
+    backgroundColor: '#E1E1E1',
+    borderRadius: 12,
   },
   uploadButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
     color: '#004dd3',
-    fontWeight: '600',
+    marginRight: 8,
   },
   carousel: {
-    marginVertical: 10,
+    marginBottom: 24,
   },
   imageContainer: {
     position: 'relative',
-    marginRight: 10,
+    marginRight: 12,
   },
   imageCarousel: {
-    width: 150,
-    height: 150,
+    width: 100,
+    height: 100,
     borderRadius: 8,
+    resizeMode: 'cover',
   },
   deleteButton: {
     position: 'absolute',
     top: 5,
     right: 5,
-    backgroundColor: '#d9534f',
-    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 50,
     padding: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   saveButton: {
     backgroundColor: '#004dd3',
+    paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20,
-    height: 48,
-    marginBottom: 24,
   },
   saveButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
     color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  booleanContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  booleanButton: {
-    width: '48%',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    backgroundColor: '#fff',
-    borderColor: '#e4e4e7',
-    alignItems: 'center',
-  },
-  booleanButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  booleanSelected: {
-    backgroundColor: '#e3ebf6',
-    borderColor: '#004dd3',
   },
 });
 

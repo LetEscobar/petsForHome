@@ -1,35 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FlatList, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
-import Card from '@/components/Card'; // Importando o Card
+import Card from '@/components/Card'; 
 import { useNavigation } from '@react-navigation/native';
+import { db } from '../../assets/firebaseConfig.js'; 
+import { collection, getDocs } from 'firebase/firestore';
+import { router } from 'expo-router';
 
 export default function Feed() {
   const navigation = useNavigation();
-  
-  // Estado para controlar o filtro ativo
+
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+  const [pets, setPets] = useState<any[]>([]); 
+  const [loading, setLoading] = useState(true); 
 
-  // Lista completa de dados dos cards
-  const cardData = [
-    { id: '1', title: 'Caramelo', subtitle: 'MACHO', description: 'Cachorro', imageSource: 'https://picsum.photos/200/600', type: 'Cachorro' },
-    { id: '2', title: 'Luna', subtitle: 'FÊMEA', description: 'Gato', imageSource: 'https://picsum.photos/200/301', type: 'Gato' },
-    { id: '3', title: 'Bobby', subtitle: 'MACHO', description: 'Cachorro', imageSource: 'https://picsum.photos/200/302', type: 'Cachorro' },
-    { id: '4', title: 'Bella', subtitle: 'FÊMEA', description: 'Gato', imageSource: 'https://picsum.photos/200/303', type: 'Gato' },
-    { id: '5', title: 'Max', subtitle: 'MACHO', description: 'Cachorro', imageSource: 'https://picsum.photos/200/304', type: 'Cachorro' },
-    { id: '6', title: 'Mia', subtitle: 'FÊMEA', description: 'Gato', imageSource: 'https://picsum.photos/200/305', type: 'Gato' },
-    { id: '7', title: 'Rex', subtitle: 'MACHO', description: 'Cachorro', imageSource: 'https://picsum.photos/200/306', type: 'Cachorro' },
-  ];
+const fetchPets = async () => {
+  try {
+    const petsCollectionRef = collection(db, 'pets'); 
+    const snapshot = await getDocs(petsCollectionRef);
+    const petList = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(), 
+    }));
+    setPets(petList); 
+  } catch (error) {
+    console.error('Erro ao buscar pets:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
-  // Filtra os cards com base no filtro selecionado
+  useEffect(() => {
+    fetchPets();
+  }, []);
+
   const filteredData = selectedFilter
-    ? cardData.filter(item => item.type === selectedFilter)
-    : cardData;
+    ? pets.filter(item => item.type === selectedFilter)
+    : pets;
 
   return (
-    <FlatList style={styles.background}
+    <FlatList
+      style={styles.background}
       ListHeaderComponent={
         <View style={styles.container}>
-          {/* Título e texto de filtro */}
           <Text style={styles.heading}>Que tipo de pet está procurando?</Text>
 
           {/* Filtro de tags */}
@@ -63,21 +75,24 @@ export default function Feed() {
       data={filteredData}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
-        <TouchableOpacity style={styles.cardContainer}
-          onPress={() => navigation.navigate('modalAdotarPet', { pet: item })}
+        <TouchableOpacity
+          style={styles.cardContainer}
+          onPress={() => router.push(`/modalAdotarPet?id=${item.id}`)}
+
         >
           <Card
-            title={item.title}
-            subtitle={item.subtitle}
-            description={item.description}
-            imageSource={item.imageSource}
+            name={item.name} 
+            sex={item.sex} 
+            type={item.type} 
+            images={item.images || []} 
           />
         </TouchableOpacity>
       )}
-      numColumns={2} // Define que cada linha terá 2 colunas
-      columnWrapperStyle={styles.columnWrapper} // Garante espaçamento entre as colunas
+      numColumns={2} 
+      columnWrapperStyle={styles.columnWrapper} 
       contentContainerStyle={styles.listContent}
       showsVerticalScrollIndicator={false}
+      ListFooterComponent={loading ? <Text>Carregando...</Text> : null} 
     />
   );
 }
@@ -129,14 +144,14 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     flex: 1,
-    padding: 8, // Espaçamento entre os cards
-    maxWidth: '50%', // Garante que cada card ocupe 50% da largura
+    padding: 8, 
+    maxWidth: '50%', 
     backgroundColor: '#f9f9f9',
   },
   columnWrapper: {
-    justifyContent: 'space-between', // Espaçamento igual entre as colunas
+    justifyContent: 'space-between', 
   },
   listContent: {
-    paddingHorizontal: 8,
+    paddingBottom: 16,
   },
 });

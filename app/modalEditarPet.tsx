@@ -1,33 +1,71 @@
 import { StatusBar } from 'expo-status-bar';
 import { Platform, ScrollView, StyleSheet, TouchableOpacity, Image, TextInput, Alert, View } from 'react-native';
 import { Text } from '@/components/Themed';
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useState, useEffect } from 'react';
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from 'expo-router';
+import { db } from '../assets/firebaseConfig.js'; 
 
 const EditPetScreen = ({ route }) => {
-  const [name, setName] = useState(route?.params?.petData?.name || '');
-  const [sex, setSex] = useState(route?.params?.petData?.sex || 'Feminino');
-  const [type, setType] = useState(route?.params?.petData?.type || 'Gato');
-  const [ageYears, setAgeYears] = useState(route?.params?.petData?.ageYears || '');
-  const [ageMonths, setAgeMonths] = useState(route?.params?.petData?.ageMonths || '');
-  const [requirements, setRequirements] = useState(route?.params?.petData?.requirements || '');
-  const [images, setImages] = useState(route?.params?.petData?.images || []);
-  const [castrado, setCastrado] = useState(route?.params?.petData?.castrado || false);
-  const [vacinasEmDia, setVacinasEmDia] = useState(route?.params?.petData?.vacinasEmDia || false);
+  const petId = route?.params?.petId;  
+  const [petData, setPetData] = useState(null);  
+
+  const [name, setName] = useState('');
+  const [sex, setSex] = useState('Feminino');
+  const [type, setType] = useState('Gato');
+  const [ageYears, setAgeYears] = useState('');
+  const [ageMonths, setAgeMonths] = useState('');
+  const [requirements, setRequirements] = useState('');
+  const [images, setImages] = useState([]);
+  const [castrado, setCastrado] = useState(false);
+  const [vacinasEmDia, setVacinasEmDia] = useState(false);
 
   const navigation = useNavigation();
 
   useLayoutEffect(() => {
-    // Define o título do modal
     navigation.setOptions({
       title: 'Editar Pet',
     });
   }, [navigation]);
 
-  // Função para fazer upload de imagem
+  useEffect(() => {
+    if (petId) {
+      db.collection('pets')  // Assumindo que você tenha uma coleção 'pets' no Firestore
+        .doc(petId)
+        .get()
+        .then(docSnapshot => {
+          if (docSnapshot.exists) {
+            const pet = docSnapshot.data();
+            setPetData(pet);
+  
+            // Preenchendo os campos com os dados do pet
+            setName(pet.name);
+            setSex(pet.sex);
+            setType(pet.type);
+  
+            // Ajustando o formato de idade para preencher os campos de anos e meses
+            if (pet.age && pet.age.years && pet.age.months) {
+              setAgeYears(pet.age.years.toString());
+              setAgeMonths(pet.age.months.toString());
+            }
+  
+            setRequirements(pet.requirements);
+            setImages(pet.images || []);
+            setCastrado(pet.castrado);
+            setVacinasEmDia(pet.vacinasEmDia);
+          } else {
+            Alert.alert('Erro', 'Pet não encontrado!');
+          }
+        })
+        .catch(error => {
+          console.error('Erro ao buscar dados do pet:', error);
+          Alert.alert('Erro', 'Falha ao buscar dados do pet');
+        });
+    }
+  }, [petId]);
+
   const handleUpload = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -47,7 +85,6 @@ const EditPetScreen = ({ route }) => {
     }
   };
 
-  // Função para excluir uma imagem
   const handleDeleteImage = (uri) => {
     Alert.alert(
       'Excluir Imagem',
@@ -65,26 +102,46 @@ const EditPetScreen = ({ route }) => {
   };
 
   const handleSave = () => {
-    // Aqui você pode implementar a lógica para salvar as informações do pet
-    console.log({
-      name,
-      sex,
-      type,
-      ageYears,
-      ageMonths,
-      requirements,
-      castrado,
-      vacinasEmDia,
-      images,
-    });
-    Alert.alert('Sucesso', 'Informações do pet atualizadas com sucesso!');
+    if (!name || !ageYears || !ageMonths || !requirements) {
+      Alert.alert('Erro', 'Todos os campos obrigatórios devem ser preenchidos!');
+      return;
+    }
+
+    const age = {
+      years: parseInt(ageYears),  
+      months: parseInt(ageMonths), 
+    };
+
+    db.collection('pets')
+      .doc(petId)
+      .update({
+        name,
+        sex,
+        type,
+        age,  
+        requirements,
+        castrado,
+        vacinasEmDia,
+        images,
+      })
+      .then(() => {
+        Alert.alert('Sucesso', 'Informações do pet atualizadas com sucesso!');
+        navigation.goBack(); 
+      })
+      .catch((error) => {
+        console.error('Erro ao salvar pet:', error);
+        Alert.alert('Erro', 'Falha ao salvar as informações do pet');
+      });
   };
+
+  if (!petData) {
+    return <Text>Carregando...</Text>;  
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Atualize as Informações do Pet</Text>
 
-      {/* Input de Nome */}
       <Text style={styles.label}>Nome do pet</Text>
       <TextInput
         style={styles.input}
@@ -93,7 +150,6 @@ const EditPetScreen = ({ route }) => {
         onChangeText={setName}
       />
 
-      {/* Dropdown de Sexo */}
       <Text style={styles.label}>Sexo</Text>
       <Picker
         selectedValue={sex}
@@ -104,7 +160,6 @@ const EditPetScreen = ({ route }) => {
         <Picker.Item label="Masculino" value="Masculino" />
       </Picker>
 
-      {/* Dropdown de Tipo */}
       <Text style={styles.label}>Tipo de animal</Text>
       <Picker
         selectedValue={type}
@@ -115,7 +170,6 @@ const EditPetScreen = ({ route }) => {
         <Picker.Item label="Cachorro" value="Cachorro" />
       </Picker>
 
-      {/* Idade Aproximada */}
       <Text style={styles.label}>Idade Aproximada</Text>
       <View style={styles.ageContainer}>
         <TextInput
@@ -134,7 +188,6 @@ const EditPetScreen = ({ route }) => {
         />
       </View>
 
-      {/* Campo Castrado */}
       <Text style={styles.label}>Castrado</Text>
       <View style={styles.booleanContainer}>
         <TouchableOpacity
@@ -151,7 +204,6 @@ const EditPetScreen = ({ route }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Campo Vacinas em Dia */}
       <Text style={styles.label}>Vacinas em dia</Text>
       <View style={styles.booleanContainer}>
         <TouchableOpacity
@@ -168,192 +220,149 @@ const EditPetScreen = ({ route }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Requisitos de Adoção */}
       <Text style={styles.label}>Requisitos de Adoção</Text>
       <TextInput
-        style={styles.textarea}
-        placeholder="Descreva os requisitos de adoção"
+        style={[styles.input, styles.textArea]}
+        placeholder="Requisitos para adoção"
         multiline
-        numberOfLines={4}
         value={requirements}
         onChangeText={setRequirements}
       />
 
-      {/* Upload de Mídias */}
-      <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
-        <Text style={styles.uploadButtonText}>Fazer upload de mídias</Text>
-        <Icon name="upload" size={20} color="#004dd3" />
+      <Text style={styles.label}>Imagens do Pet</Text>
+      <View style={styles.imageGallery}>
+        {images.map((uri, index) => (
+          <View key={index} style={styles.imageContainer}>
+            <Image source={{ uri }} style={styles.image} />
+            <TouchableOpacity onPress={() => handleDeleteImage(uri)} style={styles.deleteImageButton}>
+              <Icon name="delete" size={24} color="#ff0000" />
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
+      <TouchableOpacity onPress={handleUpload} style={styles.uploadButton}>
+        <Text style={styles.uploadButtonText}>Adicionar Imagem</Text>
       </TouchableOpacity>
 
-      {/* Carrossel de Imagens */}
-      {images.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
-          {images.map((uri, index) => (
-            <View key={index} style={styles.imageContainer}>
-              <Image source={{ uri }} style={styles.imageCarousel} />
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => handleDeleteImage(uri)}
-              >
-                <Icon name="delete" size={24} color="#fff" />
-              </TouchableOpacity>
-            </View>
-          ))}
-        </ScrollView>
-      )}
-
-      {/* Botão de Salvar */}
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveButtonText}>Salvar informações do pet</Text>
+      <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
+        <Text style={styles.saveButtonText}>Salvar</Text>
       </TouchableOpacity>
-
-      {/* Status bar */}
-      <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-    container: {
-      padding: 16,
-      backgroundColor: '#f9f9f9',
-    },
-    title: {
-      marginTop: 16,
-      marginBottom: 24,
-      fontSize: 16,
-      fontWeight: '600',
-      textAlign: 'center',
-      color: '#000',
-    },
-    label: {
-      fontSize: 16,
-      fontWeight: '700',
-      marginBottom: 8,
-      color: '#000',
-    },
-    input: {
-      height: 56,
-      borderWidth: 1,
-      paddingHorizontal: 8,
-      marginBottom: 24,
-      borderRadius: 12,
-      backgroundColor: '#fff',
-      borderStyle: 'solid',
-      borderColor: '#e4e4e7',
-    },
-    picker: {
-      height: 50,
-      width: '100%',
-      marginBottom: 24,
-      borderRadius: 12,
-      backgroundColor: '#fff',
-      borderStyle: 'solid',
-      borderColor: '#e4e4e7',
-    },
-    ageContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginBottom: 24,
-    },
-    ageInput: {
-      width: '48%',
-      height: 56,
-      borderWidth: 1,
-      paddingHorizontal: 8,
-      marginBottom: 12,
-      borderRadius: 12,
-      backgroundColor: '#fff',
-      borderStyle: 'solid',
-      borderColor: '#e4e4e7',
-    },
-    textarea: {
-      height: 100,
-      borderWidth: 1,
-      paddingHorizontal: 8,
-      marginBottom: 24,
-      borderRadius: 12,
-      backgroundColor: '#fff',
-      borderStyle: 'solid',
-      borderColor: '#e4e4e7',
-    },
-    uploadButton: {
-      borderRadius: 12,
-      borderStyle: 'solid',
-      borderColor: '#004dd3',
-      borderWidth: 1,
-      backgroundColor: '#fff',
-      padding: 10,
-      alignItems: 'center',
-      marginBottom: 12,
-      flexDirection: 'row',
-      gap: 24,
-      alignContent: 'center',
-      justifyContent: 'center',
-    },
-    uploadButtonText: {
-      color: '#004dd3',
-      fontWeight: '600',
-    },
-    carousel: {
-      marginVertical: 10,
-    },
-    imageContainer: {
-      position: 'relative',
-      marginRight: 10,
-    },
-    imageCarousel: {
-      width: 150,
-      height: 150,
-      borderRadius: 8,
-    },
-    deleteButton: {
-      position: 'absolute',
-      top: 5,
-      right: 5,
-      backgroundColor: '#d9534f',
-      borderRadius: 12,
-      padding: 5,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    saveButton: {
-      backgroundColor: '#004dd3',
-      borderRadius: 12,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: 20,
-      height: 48,
-      marginBottom: 24,
-    },
-    saveButtonText: {
-      color: '#fff',
-      fontWeight: '600',
-      fontSize: 16,
-    },
-    booleanContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginBottom: 24,
-    },
-    booleanButton: {
-      width: '48%',
-      padding: 16,
-      borderRadius: 12,
-      borderWidth: 1,
-      backgroundColor: '#fff',
-      borderColor: '#e4e4e7',
-      alignItems: 'center',
-    },
-    booleanButtonText: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: '#000',
-    },
-    booleanSelected: {
-      backgroundColor: '#e3ebf6',
-      borderColor: '#004dd3',
-    },
-  });
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+    fontWeight: 'bold',
+  },
+  input: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 12,
+  },
+  picker: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  ageContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  ageInput: {
+    width: '45%',
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 12,
+  },
+  booleanContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  booleanButton: {
+    flex: 1,
+    height: 40,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  booleanSelected: {
+    backgroundColor: '#4caf50',
+  },
+  booleanButtonText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  imageGallery: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 16,
+  },
+  imageContainer: {
+    position: 'relative',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  image: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+  },
+  deleteImageButton: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: 50,
+    padding: 5,
+  },
+  uploadButton: {
+    backgroundColor: '#007bff',
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  uploadButtonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 16,
+  },
+  saveButton: {
+    backgroundColor: '#28a745',
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  saveButtonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 16,
+  },
+});
 
 export default EditPetScreen;

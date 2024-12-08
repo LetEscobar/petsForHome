@@ -2,26 +2,29 @@ import * as React from "react";
 import { Image, StyleSheet, View, Text } from "react-native";
 
 interface CardProps {
-  title: string;
-  subtitle: string;
-  description: string;
-  imageSource: string; // Adicionado para permitir passar a imagem como prop
+  name: string;
+  sex: string;
+  type: string;
+  images: string[]; // Imagens como um array
 }
 
-const Card: React.FC<CardProps> = ({ title, subtitle, description, imageSource }) => {
+const Card: React.FC<CardProps> = ({ name, sex, type, images }) => {
+  const fallbackImage = "https://res.cloudinary.com/dvjtr3on8/image/upload/v1733663318/samples/cloudinary-icon.png";
+
   return (
     <View style={styles.card}>
       <View style={styles.imageContainer}>
+        {/* Verificando se há imagens e exibindo a primeira, ou a imagem fallback */}
         <Image
           style={styles.cardImage}
           resizeMode="cover"
-          source={{ uri: imageSource }} // Utilizando a prop para a imagem
+          source={{ uri: images.length > 0 ? images[0] : fallbackImage }}
         />
       </View>
       <View style={styles.textContainer}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.subtitle}>{subtitle}</Text>
-        <Text style={styles.description}>{description}</Text>
+        <Text style={styles.title}>{name || 'Sem nome'}</Text> {/* Fallback para título */}
+        <Text style={styles.subtitle}>{type || 'Sem tipo'}</Text> {/* Tipo do pet */}
+        <Text style={styles.description}>{sex || 'Sem sexo'}</Text> {/* Sexo do pet */}
       </View>
     </View>
   );
@@ -36,7 +39,7 @@ const styles = StyleSheet.create({
     shadowRadius: 15,
     shadowOpacity: 1,
     elevation: 5,
-    width: '100%', // Garantir que o card ocupe a largura total disponível
+    width: '100%',
   },
   imageContainer: {
     borderTopLeftRadius: 14,
@@ -45,7 +48,7 @@ const styles = StyleSheet.create({
   },
   cardImage: {
     width: "100%",
-    height: 150, // Altura fixa para a imagem
+    height: 150,
   },
   textContainer: {
     padding: 16,

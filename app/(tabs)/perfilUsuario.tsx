@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert } from 'react-native';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDoc, DocumentData, updateDoc } from 'firebase/firestore'; // Importando Firestore
+import { getFirestore, doc, getDoc, DocumentData, updateDoc } from 'firebase/firestore';
 
 interface UserData {
   nome: string;
@@ -35,9 +35,8 @@ const VerPerfilUsuario: React.FC = () => {
   });
 
   const [cep, setCep] = useState<string>('');
-  const [isEditable, setIsEditable] = useState<boolean>(false); // Controle de edição
+  const [isEditable, setIsEditable] = useState<boolean>(false);
 
-  // Função para buscar os dados do usuário no Firestore
   const fetchUserData = async () => {
     const auth = getAuth();
     const user = auth.currentUser;
@@ -75,12 +74,10 @@ const VerPerfilUsuario: React.FC = () => {
     }
   };
 
-  // Função para permitir edição dos campos
   const toggleEdit = () => {
     setIsEditable(!isEditable);
   };
 
-  // Função para salvar os dados alterados
   const saveChanges = async () => {
     const auth = getAuth();
     const user = auth.currentUser;
@@ -100,7 +97,7 @@ const VerPerfilUsuario: React.FC = () => {
           cep: userData.cep
         });
         Alert.alert('Sucesso', 'Dados atualizados com sucesso!');
-        setIsEditable(false); // Desabilita o modo de edição após salvar
+        setIsEditable(false);
       } catch (error) {
         Alert.alert('Erro', 'Erro ao salvar os dados.');
       }
@@ -142,7 +139,7 @@ const VerPerfilUsuario: React.FC = () => {
           placeholder={label}
           value={value}
           onChangeText={onChangeText}
-          editable={editable} // Permitir edição
+          editable={editable}
         />
       </View>
     );
@@ -217,7 +214,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   readOnly: {
-    backgroundColor: '#e0e0e0', // Cor de fundo para campos não editáveis
+    backgroundColor: '#e0e0e0',
   },
   saveButton: {
     backgroundColor: '#4CAF50',

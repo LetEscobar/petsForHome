@@ -4,7 +4,6 @@ import { Text, View } from '@/components/Themed';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { useNavigation } from 'expo-router';
 
-// Função para gerar informações aleatórias caso não haja pets cadastrados
 const getRandomInterestedPeople = () => [
   {
     name: 'João Silva',
@@ -26,7 +25,6 @@ const getRandomInterestedPeople = () => [
   },
 ];
 
-// Função para gerar informações aleatórias de pets caso não haja pets cadastrados
 const getRandomPetData = () => ({
   name: 'Bobby',
   type: 'Cachorro',
@@ -44,10 +42,8 @@ export default function ModalScreen({ route }) {
   const [error, setError] = useState('');
   const [interestedPeople, setInterestedPeople] = useState([]);
 
-  // Dados do pet vindos do card ou aleatórios
   const petData = route?.params?.petData || getRandomPetData();
 
-  // Use o useEffect para popular o array de interessados quando o componente for montado
   useEffect(() => {
     const fetchedPeople = getRandomInterestedPeople();
     setInterestedPeople(fetchedPeople);
@@ -56,7 +52,6 @@ export default function ModalScreen({ route }) {
   const navigation = useNavigation();
 
   useLayoutEffect(() => {
-    // Define o título do modal
     navigation.setOptions({
       title: 'Informações do pet',
     });
@@ -66,7 +61,6 @@ export default function ModalScreen({ route }) {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Informações do Pet</Text>
 
-      {/* Exibindo as imagens do pet em uma galeria */}
       <ScrollView horizontal contentContainerStyle={styles.gallery}>
         {petData.images.map((image, index) => (
           <Image key={index} source={{ uri: image }} style={styles.image} resizeMode="cover" />
@@ -161,7 +155,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     color: '#000',
-  },
+  } as TextStyle,
   gallery: {
     flexDirection: 'row',
     marginBottom: 20,

@@ -108,12 +108,10 @@ const CadastroUsuario: React.FC = () => {
 
   const createUserInFirebase = async () => {
     try {
-      // Criação do usuário no Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, finalizarData.email, finalizarData.senha);
       const user = userCredential.user;
 
-      // Salvar os dados do usuário no Firestore
-      const userRef = doc(db, 'usuarios', user.uid);  // Usando o UID do usuário como o ID no Firestore
+      const userRef = doc(db, 'usuarios', user.uid);  
       await setDoc(userRef, {
         nome: userData.nome,
         cpf: userData.cpf,
@@ -129,7 +127,6 @@ const CadastroUsuario: React.FC = () => {
         email: finalizarData.email
       });
 
-      // Efetuar o login após cadastro
       await signInWithEmailAndPassword(auth, finalizarData.email, finalizarData.senha);
 
       Alert.alert('Cadastro completo', 'Seu cadastro foi realizado com sucesso!');

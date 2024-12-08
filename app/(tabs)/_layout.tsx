@@ -5,6 +5,7 @@ import { Link, Tabs, useRouter } from 'expo-router';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 
+
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
   color: string;
@@ -39,12 +40,12 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#004DD3', // Cor dos ícones ativos
-        tabBarInactiveTintColor: '#484848', // Cor dos ícones inativos
+        tabBarActiveTintColor: '#004DD3', 
+        tabBarInactiveTintColor: '#484848', 
         tabBarStyle: {
-          height: 70, // Aumenta a altura da TabBar
-          paddingBottom: 10, // Opcional: Ajusta o padding inferior
-          paddingTop: 10, // Opcional: Ajusta o padding superior
+          height: 70, 
+          paddingBottom: 10, 
+          paddingTop: 10,
         },
         headerShown: useClientOnlyValue(false, true),
       }}
@@ -55,18 +56,14 @@ export default function TabLayout() {
           title: 'Feed',
           tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
           headerRight: () => (
-            <Link href="/modalNotificacoes" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="bell"
-                    size={25}
-                    color="#484848"
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
+            <Pressable onPress={handleLogout}>
+              <FontAwesome
+                name="sign-out"
+                size={25}
+                color="#484848"
+                style={{ marginRight: 15 }}
+              />
+            </Pressable>
           ),
         }}
       />
@@ -89,16 +86,6 @@ export default function TabLayout() {
         options={{
           title: 'Meu Perfil',
           tabBarIcon: ({ color }) => <TabBarIcon name="user-circle" color={color} />,
-          headerRight: () => (
-            <Pressable onPress={handleLogout}>
-              <FontAwesome
-                name="sign-out"
-                size={25}
-                color="#484848"
-                style={{ marginRight: 15 }}
-              />
-            </Pressable>
-          ),
         }}
       />
     </Tabs>
